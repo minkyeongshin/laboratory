@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 import { MaintenanceBanner } from "@/components/MaintenanceBanner";
 import { NetworkNotAvailableBanner } from "@/components/NetworkNotAvailableBanner";
@@ -14,10 +15,13 @@ import { initTracking } from "@/metrics/tracking";
 import { useStore } from "@/store/useStore";
 
 export const LayoutMain = ({ children }: { children: ReactNode }) => {
+  const pathname = usePathname();
   const { floatNotifications, removeFloatNotification } = useStore();
   const [floatNotificationOffsetTop, setFloatNotificationOffsetTop] =
     useState(0);
   const headerRef = useRef<HTMLDivElement>(null);
+
+  const isStandalonePage = pathname.startsWith("/playground");
 
   // Init tracking
   useEffect(() => {
@@ -26,6 +30,8 @@ export const LayoutMain = ({ children }: { children: ReactNode }) => {
 
   // FloatNotification dynamic position based on header height (with or without banner)
   useEffect(() => {
+    if (isStandalonePage) return;
+
     const headerEl = headerRef.current;
 
     if (!headerEl) return;
@@ -42,10 +48,12 @@ export const LayoutMain = ({ children }: { children: ReactNode }) => {
     return () => {
       resizeObserver.disconnect();
     };
-  }, []);
+  }, [isStandalonePage]);
 
   // Handle auto closing float notifications
   useEffect(() => {
+    if (isStandalonePage) return;
+
     if (floatNotifications.length === 0) {
       return;
     }
@@ -70,7 +78,12 @@ export const LayoutMain = ({ children }: { children: ReactNode }) => {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [floatNotifications, removeFloatNotification]);
+  }, [isStandalonePage, floatNotifications, removeFloatNotification]);
+
+  // Render standalone pages without the main app shell
+  if (isStandalonePage) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="LabLayout">
