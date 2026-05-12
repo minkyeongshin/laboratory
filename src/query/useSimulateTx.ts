@@ -2,6 +2,9 @@ import { useMutation } from "@tanstack/react-query";
 
 import { NetworkHeaders } from "@/types/types";
 
+import { IS_MOCK_MODE } from "@/mocks";
+import { getMockSimulateTransactionResponse } from "@/mocks/fixtures/transactions";
+
 type SimulateTxProps = {
   rpcUrl: string;
   transactionXdr: string;
@@ -21,6 +24,10 @@ export const useSimulateTx = () => {
       xdrFormat,
       authMode,
     }: SimulateTxProps) => {
+      if (IS_MOCK_MODE) {
+        return getMockSimulateTransactionResponse();
+      }
+
       try {
         const res = await fetch(rpcUrl, {
           method: "POST",

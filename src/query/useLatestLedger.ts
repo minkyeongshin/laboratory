@@ -3,6 +3,9 @@ import { rpc as StellarRpc } from "@stellar/stellar-sdk";
 
 import { useQuery } from "@tanstack/react-query";
 
+import { IS_MOCK_MODE } from "@/mocks";
+import { getMockLatestLedger } from "@/mocks/fixtures/ledger";
+
 export const useLatestLedger = ({
   rpcUrl,
   headers,
@@ -13,6 +16,10 @@ export const useLatestLedger = ({
   const query = useQuery({
     queryKey: ["latestLedger"],
     queryFn: async () => {
+      if (IS_MOCK_MODE) {
+        return getMockLatestLedger();
+      }
+
       const rpcServer = new StellarRpc.Server(rpcUrl, {
         headers,
         allowHttp: new URL(rpcUrl).hostname === "localhost",

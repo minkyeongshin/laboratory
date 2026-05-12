@@ -2,6 +2,8 @@ import * as amplitude from "@amplitude/analytics-browser";
 import { parse } from "zustand-querystring";
 import { AnyObject } from "@/types/types";
 
+import { IS_MOCK_MODE } from "@/mocks";
+
 const AMPLITUDE_API_KEY_DEV = "21f9b86405da037f7b9d1f00a235a4fd";
 const AMPLITUDE_API_KEY_PROD = "660a7cac35ad6ee81adc20f74cc74bba";
 
@@ -12,6 +14,11 @@ declare global {
 }
 
 export const initTracking = () => {
+  if (IS_MOCK_MODE) {
+    console.log("[MOCK MODE] Amplitude analytics disabled");
+    return;
+  }
+
   if (window.__STELLAR_TRACKING_ENABLED__) {
     return;
   }

@@ -21,6 +21,9 @@ import {
   XdrFormatType,
 } from "@/types/types";
 
+import { IS_MOCK_MODE } from "@/mocks";
+import { MOCK_WALLET_STATE } from "@/mocks/mockWallet";
+
 export type FeeBumpParams = {
   source_account: string;
   fee: string;
@@ -360,10 +363,12 @@ export const createStore = (options: CreateStoreOptions) =>
         previousNetwork: {},
         theme: null,
         isDynamicNetworkSelect: false,
-        walletKit: {
-          publicKey: undefined,
-          walletType: undefined,
-        },
+        walletKit: IS_MOCK_MODE
+          ? MOCK_WALLET_STATE
+          : {
+              publicKey: undefined,
+              walletType: undefined,
+            },
         selectNetwork: (network: Network) =>
           set((state) => {
             state.previousNetwork = state.network;

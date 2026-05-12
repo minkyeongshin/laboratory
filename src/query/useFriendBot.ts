@@ -3,6 +3,9 @@ import { EmptyObj, Network, NetworkHeaders } from "@/types/types";
 
 import { shortenStellarAddress } from "@/helpers/shortenStellarAddress";
 
+import { IS_MOCK_MODE } from "@/mocks";
+import { getMockFriendbotResponse } from "@/mocks/fixtures/friendbot";
+
 export const useFriendBot = ({
   network,
   publicKey,
@@ -22,6 +25,10 @@ export const useFriendBot = ({
   const query = useQuery({
     queryKey: ["friendBot", publicKey, key],
     queryFn: async () => {
+      if (IS_MOCK_MODE) {
+        return getMockFriendbotResponse();
+      }
+
       if (!network.horizonUrl) {
         throw new Error(`Please use a network that supports Horizon`);
       }

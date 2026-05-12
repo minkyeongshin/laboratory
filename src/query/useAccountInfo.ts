@@ -1,6 +1,9 @@
 import { NetworkHeaders } from "@/types/types";
 import { useQuery } from "@tanstack/react-query";
 
+import { IS_MOCK_MODE } from "@/mocks";
+import { getMockAccountInfo } from "@/mocks/fixtures/accounts";
+
 export const useAccountInfo = ({
   publicKey,
   horizonUrl,
@@ -13,6 +16,10 @@ export const useAccountInfo = ({
   const query = useQuery({
     queryKey: ["accountInfo", publicKey],
     queryFn: async () => {
+      if (IS_MOCK_MODE) {
+        return getMockAccountInfo(publicKey);
+      }
+
       try {
         const response = await fetch(`${horizonUrl}/accounts/${publicKey}`, {
           headers,

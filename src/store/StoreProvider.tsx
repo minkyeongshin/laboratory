@@ -1,7 +1,9 @@
 "use client";
-import { createContext, ReactNode, useState } from "react";
+import { createContext, ReactNode, useState, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { createStore } from "@/store/createStore";
+
+import { logMockModeStatus } from "@/mocks";
 
 export type StoreType = ReturnType<typeof createStore>;
 export const ZustandContext = createContext<StoreType | null>(null);
@@ -16,6 +18,11 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
       url,
     }),
   );
+
+  // Log mock mode status on initial mount
+  useEffect(() => {
+    logMockModeStatus();
+  }, []);
 
   return (
     <ZustandContext.Provider value={store}>{children}</ZustandContext.Provider>
