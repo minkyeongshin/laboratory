@@ -1,5 +1,9 @@
 # Claude Code Instructions for Stellar Laboratory
 
+## Playground / Prototype Work
+
+When working inside `src/app/(sidebar)/playground/`, also read all files in `src/app/(sidebar)/playground/design-system/rules/` before writing code. Those rules apply to prototype work; the rest of this document applies to production work.
+
 ## Quick Reference
 
 ```bash
