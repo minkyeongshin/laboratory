@@ -5,7 +5,7 @@ How prototypes are organized inside this repo. Following the pattern makes proto
 ## Folder layout
 
 ```
-src/app/(sidebar)/playground/
+src/app/playground/
 ├── page.tsx                          # The gallery (Prototypes / Templates / Design System tabs)
 ├── prototypes/
 │   ├── stellar-skills/

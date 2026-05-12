@@ -1,5 +1,11 @@
 # 01 — Components
 
+## Scope clarification
+
+These rules apply to **prototypes inside `playground/prototypes/`** — code that explores features which may become part of the actual Stellar Lab product.
+
+The **playground page itself** (gallery, tabs, search bar, "+ New" button, modal for creating prototypes) intentionally uses custom styling, not `@stellar/design-system`. This is by design — the playground is a separate tool surface with its own visual identity. Do not refactor the playground page to use design system components.
+
 ## The preference order
 
 Use components in this exact order. Drop to the next level only after you can answer the question **"why does the previous level not solve this?"** in writing.

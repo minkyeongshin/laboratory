@@ -1,5 +1,11 @@
 # 02 — Styling
 
+## Scope clarification
+
+These rules apply to **prototypes inside `playground/prototypes/`** — code that explores features which may become part of the actual Stellar Lab product.
+
+The **playground page itself** (`playground/page.tsx`, `playground/styles.scss`) intentionally uses custom styling with hardcoded values. This is by design — the playground is a separate tool surface with its own visual identity. Do not refactor the playground page to use design system tokens.
+
 ## The one rule
 
 Use `@stellar/design-system` tokens and Sass. Nothing else.

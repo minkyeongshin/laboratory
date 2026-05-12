@@ -1,80 +1,68 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Icon } from "@stellar/design-system";
+import Link from "next/link";
 
 import "./styles.scss";
 
 type PlaygroundTab = "prototypes" | "templates" | "design-system";
 
-interface PlaygroundItem {
+interface PlaygroundPrototype {
   id: string;
   name: string;
   description: string;
-  timestamp: string;
-  externalUrl: string;
+  date: string;
+  type: "local" | "external";
+  href: string;
 }
 
-const INITIAL_PROTOTYPES: PlaygroundItem[] = [
-  {
-    id: "1",
-    name: "Stellar Skills",
-    description: "AI-native developer skill system for Stellar ecosystem",
-    timestamp: "2026-05-11",
-    externalUrl:
-      "https://stellar-playground-two.vercel.app/?url=stellarskills-theta.vercel.app%252F",
-  },
-];
-
-/**
- * Validates if a string is a valid URL
- */
-const isValidUrl = (urlString: string): boolean => {
-  try {
-    const url = new URL(urlString);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-};
-
-/**
- * Returns today's date in YYYY-MM-DD format
- */
-const getTodayDate = (): string => {
-  return new Date().toISOString().split("T")[0];
-};
-
-/**
- * Generates a unique ID for new items
- */
-const generateId = (): string => {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-};
+const isDev = process.env.NODE_ENV === "development";
 
 export default function Playground() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<PlaygroundTab>("prototypes");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Item state for each tab
-  const [prototypes, setPrototypes] =
-    useState<PlaygroundItem[]>(INITIAL_PROTOTYPES);
-  const [templates, setTemplates] = useState<PlaygroundItem[]>([]);
-  const [designSystem, setDesignSystem] = useState<PlaygroundItem[]>([]);
+  // Prototype data from API
+  const [prototypes, setPrototypes] = useState<PlaygroundPrototype[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Templates and design system (static for now)
+  const [templates] = useState<PlaygroundPrototype[]>([]);
+  const [designSystem] = useState<PlaygroundPrototype[]>([]);
 
   // Form state
-  const [formUrl, setFormUrl] = useState("");
-  const [formTitle, setFormTitle] = useState("");
+  const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formError, setFormError] = useState("");
 
-  const modalRef = useRef<HTMLDivElement>(null);
+  // Fetch prototypes from API
+  const fetchPrototypes = useCallback(async () => {
+    try {
+      const response = await fetch("/api/playground/prototypes");
+      if (response.ok) {
+        const data = await response.json();
+        setPrototypes(data);
+      }
+    } catch {
+      // Silently fail — show empty list
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPrototypes();
+  }, [fetchPrototypes]);
 
   const prototypesCount = prototypes.length;
   const templatesCount = templates.length;
   const designSystemCount = designSystem.length;
 
-  const getActiveItems = useCallback((): PlaygroundItem[] => {
+  const getActiveItems = useCallback((): PlaygroundPrototype[] => {
     switch (activeTab) {
       case "prototypes":
         return prototypes;
@@ -96,26 +84,15 @@ export default function Playground() {
     }
   };
 
-  const getTabLabel = (): string => {
-    switch (activeTab) {
-      case "prototypes":
-        return "prototype";
-      case "templates":
-        return "template";
-      case "design-system":
-        return "design system item";
-    }
-  };
-
   const resetForm = () => {
-    setFormUrl("");
-    setFormTitle("");
+    setFormName("");
     setFormDescription("");
     setFormError("");
   };
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
+    setIsSubmitting(false);
     resetForm();
   }, []);
 
@@ -123,49 +100,43 @@ export default function Playground() {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
 
-    // Validate URL
-    if (!formUrl.trim()) {
-      setFormError("URL is required");
+    // Validate name
+    if (!formName.trim()) {
+      setFormError("Name is required");
       return;
     }
 
-    if (!isValidUrl(formUrl.trim())) {
-      setFormError("Please enter a valid URL (e.g., https://example.com)");
-      return;
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/playground/create-prototype", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formName.trim(),
+          description: formDescription.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setFormError(data.error || "Failed to create prototype");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Success — redirect to new prototype
+      closeModal();
+      router.push(`/playground/prototypes/${data.slug}`);
+    } catch {
+      setFormError("Failed to create prototype. Please try again.");
+      setIsSubmitting(false);
     }
-
-    // Validate title
-    if (!formTitle.trim()) {
-      setFormError("Title is required");
-      return;
-    }
-
-    const newItem: PlaygroundItem = {
-      id: generateId(),
-      name: formTitle.trim(),
-      description: formDescription.trim(),
-      timestamp: getTodayDate(),
-      externalUrl: formUrl.trim(),
-    };
-
-    // Add to the appropriate list based on active tab
-    switch (activeTab) {
-      case "prototypes":
-        setPrototypes((prev) => [...prev, newItem]);
-        break;
-      case "templates":
-        setTemplates((prev) => [...prev, newItem]);
-        break;
-      case "design-system":
-        setDesignSystem((prev) => [...prev, newItem]);
-        break;
-    }
-
-    closeModal();
   };
 
   // Handle Escape key to close modal
@@ -228,47 +199,73 @@ export default function Playground() {
             <div className="Playground__search">
               <input type="text" placeholder="Search..." />
             </div>
-            <button className="Playground__new-button" onClick={openModal}>
-              <Icon.Plus />
-              New
-            </button>
+            {isDev && activeTab === "prototypes" && (
+              <button className="Playground__new-button" onClick={openModal}>
+                <Icon.Plus />
+                New
+              </button>
+            )}
           </div>
         </div>
 
-        {activeItems.length > 0 ? (
+        {isLoading ? (
+          <div className="Playground__empty">
+            <p className="Playground__empty-message">Loading...</p>
+          </div>
+        ) : activeItems.length > 0 ? (
           <section className="Playground__section">
             <h2 className="Playground__section-title">MINKYEONG</h2>
             <div className="Playground__list">
-              {activeItems.map((item) => (
-                <a
-                  key={item.id}
-                  href={item.externalUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="Playground__card"
-                >
-                  <div className="Playground__card-content">
-                    <div className="Playground__card-name">{item.name}</div>
-                    <div className="Playground__card-description">
-                      {item.description}
+              {activeItems.map((item) =>
+                item.type === "external" ? (
+                  <a
+                    key={item.id}
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="Playground__card"
+                  >
+                    <div className="Playground__card-content">
+                      <div className="Playground__card-name">
+                        {item.name}
+                        <span className="Playground__card-badge">External</span>
+                      </div>
+                      <div className="Playground__card-description">
+                        {item.description}
+                      </div>
                     </div>
-                  </div>
-                  <div className="Playground__card-meta">
-                    <span className="Playground__card-timestamp">
-                      {item.timestamp}
-                    </span>
-                    <span className="Playground__card-open">
-                      <Icon.LinkExternal01 />
-                    </span>
-                    <button
-                      className="Playground__card-delete"
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      <Icon.Trash01 />
-                    </button>
-                  </div>
-                </a>
-              ))}
+                    <div className="Playground__card-meta">
+                      <span className="Playground__card-timestamp">
+                        {item.date}
+                      </span>
+                      <span className="Playground__card-open">
+                        <Icon.LinkExternal01 />
+                      </span>
+                    </div>
+                  </a>
+                ) : (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className="Playground__card"
+                  >
+                    <div className="Playground__card-content">
+                      <div className="Playground__card-name">{item.name}</div>
+                      <div className="Playground__card-description">
+                        {item.description}
+                      </div>
+                    </div>
+                    <div className="Playground__card-meta">
+                      <span className="Playground__card-timestamp">
+                        {item.date}
+                      </span>
+                      <span className="Playground__card-open">
+                        <Icon.ChevronRight />
+                      </span>
+                    </div>
+                  </Link>
+                ),
+              )}
             </div>
           </section>
         ) : (
@@ -280,11 +277,9 @@ export default function Playground() {
 
       {isModalOpen && (
         <div className="Playground__modal-overlay" onClick={handleOverlayClick}>
-          <div className="Playground__modal" ref={modalRef}>
+          <div className="Playground__modal">
             <div className="Playground__modal-header">
-              <h2 className="Playground__modal-title">
-                Add new {getTabLabel()}
-              </h2>
+              <h2 className="Playground__modal-title">Create new prototype</h2>
               <button
                 className="Playground__modal-close"
                 onClick={closeModal}
@@ -297,53 +292,38 @@ export default function Playground() {
             <form onSubmit={handleSubmit} className="Playground__modal-form">
               <div className="Playground__form-field">
                 <label
-                  htmlFor="playground-url"
+                  htmlFor="prototype-name"
                   className="Playground__form-label"
                 >
-                  URL <span className="Playground__form-required">*</span>
+                  Name <span className="Playground__form-required">*</span>
                 </label>
                 <input
-                  id="playground-url"
+                  id="prototype-name"
                   type="text"
                   className="Playground__form-input"
-                  placeholder="https://my-prototype.vercel.app"
-                  value={formUrl}
-                  onChange={(e) => setFormUrl(e.target.value)}
+                  placeholder="My Prototype"
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  disabled={isSubmitting}
                   autoFocus
                 />
               </div>
 
               <div className="Playground__form-field">
                 <label
-                  htmlFor="playground-title"
-                  className="Playground__form-label"
-                >
-                  Title <span className="Playground__form-required">*</span>
-                </label>
-                <input
-                  id="playground-title"
-                  type="text"
-                  className="Playground__form-input"
-                  placeholder="My Prototype"
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                />
-              </div>
-
-              <div className="Playground__form-field">
-                <label
-                  htmlFor="playground-description"
+                  htmlFor="prototype-description"
                   className="Playground__form-label"
                 >
                   Description
                 </label>
                 <input
-                  id="playground-description"
+                  id="prototype-description"
                   type="text"
                   className="Playground__form-input"
                   placeholder="Short description (optional)"
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
+                  disabled={isSubmitting}
                 />
               </div>
 
@@ -356,11 +336,16 @@ export default function Playground() {
                   type="button"
                   className="Playground__modal-cancel"
                   onClick={closeModal}
+                  disabled={isSubmitting}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="Playground__modal-submit">
-                  Create
+                <button
+                  type="submit"
+                  className="Playground__modal-submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Creating..." : "Create"}
                 </button>
               </div>
             </form>

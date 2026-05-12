@@ -1,12 +1,12 @@
 # Playground Design System Rules
 
-These markdown files are the AI rules for building **prototypes** inside `src/app/(sidebar)/playground/`. They are not production code rules — see the root `CLAUDE.md` for that.
+These markdown files are the AI rules for building **prototypes** inside `src/app/playground/`. They are not production code rules — see the root `CLAUDE.md` for that.
 
 If you are an AI agent (Claude, Cursor, Copilot) working on a prototype, **read every file in this folder before you start writing code.** The files are short on purpose.
 
 ## When to use these rules
 
-- ✅ Building or editing anything under `src/app/(sidebar)/playground/`
+- ✅ Building or editing anything under `src/app/playground/`
 - ✅ Creating a new prototype from the gallery's "+ New" button
 - ✅ Adding a template or design system entry
 - ❌ Fixing production code outside `playground/` — use root `CLAUDE.md` instead
