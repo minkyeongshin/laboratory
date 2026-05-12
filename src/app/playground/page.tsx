@@ -10,7 +10,7 @@ const MOCK_PROTOTYPES = [
     name: "Stellar Skills",
     description: "AI-native developer skill system for Stellar ecosystem",
     timestamp: "2026-05-11",
-    externalUrl: "https://stellarskills-theta.vercel.app/",
+    externalUrl: "https://stellar-playground-two.vercel.app/?url=stellarskills-theta.vercel.app%252F",
   },
 ];
 
