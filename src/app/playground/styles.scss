@@ -439,6 +439,30 @@
   }
 }
 
+.Playground__form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    width: 0.875rem;
+    height: 0.875rem;
+    accent-color: #6366f1;
+    cursor: pointer;
+  }
+
+  span {
+    user-select: none;
+  }
+
+  &--indented {
+    margin-left: 1.5rem;
+  }
+}
+
 .Playground__form-select {
   width: 100%;
   height: 40px;
@@ -537,6 +561,13 @@
       background-color: #b91c1c;
     }
   }
+}
+
+.Playground__modal-hint {
+  margin: 1rem 0 0 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  text-align: center;
 }
 
 .Playground__modal-body {

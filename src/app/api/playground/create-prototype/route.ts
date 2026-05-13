@@ -4,6 +4,7 @@ import path from "path";
 
 interface StartFromBlank {
   type: "blank";
+  includeSidebar?: boolean;
 }
 
 interface StartFromExisting {
@@ -17,36 +18,53 @@ interface CreatePrototypeRequest {
   startFrom?: StartFromBlank | StartFromExisting;
 }
 
-// Mapping of source keys to actual file paths (relative to src/app/(sidebar)/)
+// Mapping of source keys to actual file paths
+// basePath defaults to "src/app/(sidebar)" if not specified
+// externalComponents: folders from src/components/ to copy into prototype's components/
 const SOURCE_PAGE_MAP: Record<
   string,
-  { path: string; hasStyles?: boolean; hasComponents?: boolean }
+  {
+    path: string;
+    basePath?: string;
+    hasStyles?: boolean;
+    hasComponents?: boolean;
+    externalComponents?: string[];
+  }
 > = {
+  // Introduction (special case - at root level, uses Home components)
+  introduction: {
+    path: "",
+    basePath: "src/app",
+    externalComponents: ["Home"],
+  },
+  // XDR
+  "xdr-to-json": { path: "xdr/view" },
+  "xdr-json-to": { path: "xdr/to" },
+  "xdr-diff": { path: "xdr/diff" },
+  // Account
+  "account-create-keypair": { path: "account/create" },
+  "account-fund": { path: "account/fund", hasComponents: true },
+  "account-muxed-create": { path: "account/muxed-create" },
+  "account-muxed-parse": { path: "account/muxed-parse" },
   // Transactions
   "transaction-dashboard": {
     path: "transaction/dashboard",
     hasStyles: true,
     hasComponents: true,
   },
-  "transaction-build": {
-    path: "transaction/build",
-    hasStyles: true,
-    hasComponents: true,
-  },
-  "transaction-sign": { path: "transaction/sign" },
-  "transaction-simulate": { path: "transaction/simulate" },
-  "transaction-submit": { path: "transaction/submit" },
-  // XDR
-  "xdr-view": { path: "xdr/view" },
-  "xdr-to": { path: "xdr/to" },
-  // Account
-  "account-create": { path: "account/create" },
-  "account-fund": { path: "account/fund" },
+  "transaction-build": { path: "transaction/build", hasComponents: true },
+  "transaction-sign": { path: "transaction/sign", hasComponents: true },
+  "transaction-fee-bump": { path: "transaction/fee-bump" },
   // Smart Contracts
   "contract-explorer": {
     path: "smart-contracts/contract-explorer",
     hasComponents: true,
   },
+  "contract-list": {
+    path: "smart-contracts/contract-list",
+    hasComponents: true,
+  },
+  "contract-deploy": { path: "smart-contracts/deploy-contract" },
 };
 
 /**
@@ -127,10 +145,14 @@ function copyDir(src: string, dest: string): void {
 
 /**
  * Adjusts import paths in a file.
- * - Changes "../styles.scss" to "./styles.scss"
- * - Other adjustments as needed
+ * - Changes "../styles.scss" to "./parent-styles.scss"
+ * - Changes "@/components/{folder}/" to "./components/{folder}/" for external components
  */
-function adjustImports(filePath: string, sourceDir: string): void {
+function adjustImports(
+  filePath: string,
+  sourceDir: string,
+  externalComponents?: string[],
+): void {
   let content = fs.readFileSync(filePath, "utf-8");
 
   // Check if source had a parent styles.scss that we need to copy
@@ -149,6 +171,18 @@ function adjustImports(filePath: string, sourceDir: string): void {
     if (fs.existsSync(parentStylesPath)) {
       const destDir = path.dirname(filePath);
       fs.copyFileSync(parentStylesPath, path.join(destDir, "parent-styles.scss"));
+    }
+  }
+
+  // Adjust imports for external components (e.g., @/components/Home/ → ./components/Home/)
+  if (externalComponents && externalComponents.length > 0) {
+    for (const folder of externalComponents) {
+      // Match both single and double quotes, with or without specific file
+      const regex = new RegExp(
+        `(['"])@/components/${folder}/([^'"]*?)(['"])`,
+        "g",
+      );
+      content = content.replace(regex, `$1./components/${folder}/$2$3`);
     }
   }
 
@@ -238,7 +272,12 @@ export async function POST(request: NextRequest) {
   const title = name.trim();
   const desc = description.trim();
   const isExisting = startFrom.type === "existing";
-  const chromeMode = isExisting ? "full" : "minimal";
+  // Chrome mode: "full" for existing pages or blank with sidebar, "minimal" for blank without sidebar
+  const chromeMode = isExisting
+    ? "full"
+    : (startFrom as StartFromBlank).includeSidebar !== false
+      ? "full"
+      : "minimal";
 
   const readmeContent = `---
 title: ${title}
@@ -297,17 +336,18 @@ export const mockData = {
       // Copy from existing page
       const sourceKey = (startFrom as StartFromExisting).sourceKey;
       const sourceInfo = SOURCE_PAGE_MAP[sourceKey];
-      const sourceDir = path.join(
-        process.cwd(),
-        "src/app/(sidebar)",
-        sourceInfo.path,
-      );
+      const basePath = sourceInfo.basePath || "src/app/(sidebar)";
+      const sourceDir = path.join(process.cwd(), basePath, sourceInfo.path);
 
       // Copy page.tsx
       const sourcePagePath = path.join(sourceDir, "page.tsx");
       if (fs.existsSync(sourcePagePath)) {
         fs.copyFileSync(sourcePagePath, path.join(prototypeDir, "page.tsx"));
-        adjustImports(path.join(prototypeDir, "page.tsx"), sourceDir);
+        adjustImports(
+          path.join(prototypeDir, "page.tsx"),
+          sourceDir,
+          sourceInfo.externalComponents,
+        );
       }
 
       // Copy styles.scss if exists
@@ -319,17 +359,31 @@ export const mockData = {
         );
       }
 
-      // Copy components directory if exists
+      // Copy components directory if exists (co-located with page)
       const sourceComponentsDir = path.join(sourceDir, "components");
       if (fs.existsSync(sourceComponentsDir)) {
         copyDir(sourceComponentsDir, path.join(prototypeDir, "components"));
-      } else {
-        // Create empty components directory
-        fs.mkdirSync(path.join(prototypeDir, "components"));
-        fs.writeFileSync(
-          path.join(prototypeDir, "components", ".gitkeep"),
-          "",
-        );
+      }
+
+      // Copy external components from src/components/
+      if (sourceInfo.externalComponents && sourceInfo.externalComponents.length > 0) {
+        const prototypeComponentsDir = path.join(prototypeDir, "components");
+        if (!fs.existsSync(prototypeComponentsDir)) {
+          fs.mkdirSync(prototypeComponentsDir);
+        }
+        for (const folder of sourceInfo.externalComponents) {
+          const externalDir = path.join(process.cwd(), "src/components", folder);
+          if (fs.existsSync(externalDir)) {
+            copyDir(externalDir, path.join(prototypeComponentsDir, folder));
+          }
+        }
+      }
+
+      // Ensure components directory exists (create with .gitkeep if empty)
+      const prototypeComponentsDir = path.join(prototypeDir, "components");
+      if (!fs.existsSync(prototypeComponentsDir)) {
+        fs.mkdirSync(prototypeComponentsDir);
+        fs.writeFileSync(path.join(prototypeComponentsDir, ".gitkeep"), "");
       }
     } else {
       // Create blank prototype

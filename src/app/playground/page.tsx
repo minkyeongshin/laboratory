@@ -19,21 +19,28 @@ interface PlaygroundPrototype {
 const isDev = process.env.NODE_ENV === "development";
 
 // Pages available to copy when creating a new prototype
-const EXISTING_PAGES = [
-  // Transactions
-  { key: "transaction-dashboard", label: "Transaction Dashboard", category: "Transactions" },
-  { key: "transaction-build", label: "Build Transaction", category: "Transactions" },
-  { key: "transaction-sign", label: "Sign Transaction", category: "Transactions" },
-  { key: "transaction-simulate", label: "Simulate Transaction", category: "Transactions" },
-  { key: "transaction-submit", label: "Submit Transaction", category: "Transactions" },
+// Items without a category appear ungrouped at the top of the dropdown
+const EXISTING_PAGES: Array<{ key: string; label: string; category?: string }> = [
+  // Ungrouped (appears first)
+  { key: "introduction", label: "Introduction" },
   // XDR
-  { key: "xdr-view", label: "View XDR", category: "XDR" },
-  { key: "xdr-to", label: "JSON to XDR", category: "XDR" },
+  { key: "xdr-to-json", label: "XDR to JSON", category: "XDR" },
+  { key: "xdr-json-to", label: "JSON to XDR", category: "XDR" },
+  { key: "xdr-diff", label: "Diff XDRs", category: "XDR" },
   // Account
-  { key: "account-create", label: "Create Keypair", category: "Account" },
-  { key: "account-fund", label: "Fund Account", category: "Account" },
+  { key: "account-create-keypair", label: "Create account keypair", category: "Account" },
+  { key: "account-fund", label: "Fund account", category: "Account" },
+  { key: "account-muxed-create", label: "Create muxed account", category: "Account" },
+  { key: "account-muxed-parse", label: "Parse muxed account", category: "Account" },
+  // Transactions
+  { key: "transaction-dashboard", label: "Transaction dashboard", category: "Transactions" },
+  { key: "transaction-build", label: "Build transaction", category: "Transactions" },
+  { key: "transaction-sign", label: "Sign transaction", category: "Transactions" },
+  { key: "transaction-fee-bump", label: "Fee bump", category: "Transactions" },
   // Smart Contracts
-  { key: "contract-explorer", label: "Contract Explorer", category: "Smart Contracts" },
+  { key: "contract-explorer", label: "Contract explorer", category: "Smart Contracts" },
+  { key: "contract-list", label: "Smart contract list", category: "Smart Contracts" },
+  { key: "contract-deploy", label: "Upload and deploy contract", category: "Smart Contracts" },
 ];
 
 export default function Playground() {
@@ -57,6 +64,7 @@ export default function Playground() {
     "blank",
   );
   const [formExistingPage, setFormExistingPage] = useState("");
+  const [formIncludeSidebar, setFormIncludeSidebar] = useState(true);
 
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<PlaygroundPrototype | null>(
@@ -116,6 +124,7 @@ export default function Playground() {
     setFormError("");
     setFormStartFrom("blank");
     setFormExistingPage("");
+    setFormIncludeSidebar(true);
   };
 
   const closeModal = useCallback(() => {
@@ -211,7 +220,7 @@ export default function Playground() {
           startFrom:
             formStartFrom === "existing"
               ? { type: "existing", sourceKey: formExistingPage }
-              : { type: "blank" },
+              : { type: "blank", includeSidebar: formIncludeSidebar },
         }),
       });
 
@@ -427,6 +436,17 @@ export default function Playground() {
                     />
                     <span>Blank page</span>
                   </label>
+                  {formStartFrom === "blank" && (
+                    <label className="Playground__form-checkbox Playground__form-checkbox--indented">
+                      <input
+                        type="checkbox"
+                        checked={formIncludeSidebar}
+                        onChange={(e) => setFormIncludeSidebar(e.target.checked)}
+                        disabled={isSubmitting}
+                      />
+                      <span>Include sidebar</span>
+                    </label>
+                  )}
                   <label className="Playground__form-radio">
                     <input
                       type="radio"
@@ -448,7 +468,14 @@ export default function Playground() {
                     disabled={isSubmitting}
                   >
                     <option value="">Select a page...</option>
-                    {["Transactions", "XDR", "Account", "Smart Contracts"].map(
+                    {/* Ungrouped items first */}
+                    {EXISTING_PAGES.filter((p) => !p.category).map((page) => (
+                      <option key={page.key} value={page.key}>
+                        {page.label}
+                      </option>
+                    ))}
+                    {/* Grouped items */}
+                    {["XDR", "Account", "Transactions", "Smart Contracts"].map(
                       (category) => (
                         <optgroup key={category} label={category}>
                           {EXISTING_PAGES.filter(
@@ -486,6 +513,11 @@ export default function Playground() {
                   {isSubmitting ? "Creating..." : "Create"}
                 </button>
               </div>
+
+              <p className="Playground__modal-hint">
+                If the new tab shows a 404, refresh — Next.js needs a moment to
+                register new routes.
+              </p>
             </form>
           </div>
         </div>
