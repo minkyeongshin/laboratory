@@ -232,8 +232,9 @@ export default function Playground() {
         return;
       }
 
-      // Success — open new prototype in new tab
+      // Success — refresh list and open new prototype in new tab
       closeModal();
+      fetchPrototypes();
       window.open(`/playground/prototypes/${data.slug}`, "_blank");
     } catch {
       setFormError("Failed to create prototype. Please try again.");
