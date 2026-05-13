@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { Icon } from "@stellar/design-system";
-import Link from "next/link";
 
 import "./styles.scss";
 
@@ -20,8 +18,25 @@ interface PlaygroundPrototype {
 
 const isDev = process.env.NODE_ENV === "development";
 
+// Pages available to copy when creating a new prototype
+const EXISTING_PAGES = [
+  // Transactions
+  { key: "transaction-dashboard", label: "Transaction Dashboard", category: "Transactions" },
+  { key: "transaction-build", label: "Build Transaction", category: "Transactions" },
+  { key: "transaction-sign", label: "Sign Transaction", category: "Transactions" },
+  { key: "transaction-simulate", label: "Simulate Transaction", category: "Transactions" },
+  { key: "transaction-submit", label: "Submit Transaction", category: "Transactions" },
+  // XDR
+  { key: "xdr-view", label: "View XDR", category: "XDR" },
+  { key: "xdr-to", label: "JSON to XDR", category: "XDR" },
+  // Account
+  { key: "account-create", label: "Create Keypair", category: "Account" },
+  { key: "account-fund", label: "Fund Account", category: "Account" },
+  // Smart Contracts
+  { key: "contract-explorer", label: "Contract Explorer", category: "Smart Contracts" },
+];
+
 export default function Playground() {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<PlaygroundTab>("prototypes");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,6 +53,17 @@ export default function Playground() {
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formError, setFormError] = useState("");
+  const [formStartFrom, setFormStartFrom] = useState<"blank" | "existing">(
+    "blank",
+  );
+  const [formExistingPage, setFormExistingPage] = useState("");
+
+  // Delete state
+  const [deleteTarget, setDeleteTarget] = useState<PlaygroundPrototype | null>(
+    null,
+  );
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   // Fetch prototypes from API
   const fetchPrototypes = useCallback(async () => {
@@ -88,6 +114,8 @@ export default function Playground() {
     setFormName("");
     setFormDescription("");
     setFormError("");
+    setFormStartFrom("blank");
+    setFormExistingPage("");
   };
 
   const closeModal = useCallback(() => {
@@ -100,6 +128,61 @@ export default function Playground() {
     setIsModalOpen(true);
   };
 
+  // Delete handlers
+  const openDeleteModal = (e: React.MouseEvent, prototype: PlaygroundPrototype) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDeleteTarget(prototype);
+    setDeleteError("");
+  };
+
+  const closeDeleteModal = useCallback(() => {
+    setDeleteTarget(null);
+    setIsDeleting(false);
+    setDeleteError("");
+  }, []);
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+
+    setIsDeleting(true);
+    setDeleteError("");
+
+    // Use different API endpoint based on prototype type
+    const endpoint =
+      deleteTarget.type === "external"
+        ? "/api/playground/delete-external-prototype"
+        : "/api/playground/delete-prototype";
+
+    const body =
+      deleteTarget.type === "external"
+        ? { id: deleteTarget.id }
+        : { slug: deleteTarget.id };
+
+    try {
+      const response = await fetch(endpoint, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setDeleteError(data.error || "Failed to delete prototype");
+        setIsDeleting(false);
+        return;
+      }
+
+      // Success — close modal and refresh list
+      closeDeleteModal();
+      fetchPrototypes();
+    } catch {
+      setDeleteError("Failed to delete prototype. Please try again.");
+      setIsDeleting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
@@ -107,6 +190,12 @@ export default function Playground() {
     // Validate name
     if (!formName.trim()) {
       setFormError("Name is required");
+      return;
+    }
+
+    // Validate existing page selection
+    if (formStartFrom === "existing" && !formExistingPage) {
+      setFormError("Please select a page to copy");
       return;
     }
 
@@ -119,6 +208,10 @@ export default function Playground() {
         body: JSON.stringify({
           name: formName.trim(),
           description: formDescription.trim(),
+          startFrom:
+            formStartFrom === "existing"
+              ? { type: "existing", sourceKey: formExistingPage }
+              : { type: "blank" },
         }),
       });
 
@@ -130,26 +223,31 @@ export default function Playground() {
         return;
       }
 
-      // Success — redirect to new prototype
+      // Success — open new prototype in new tab
       closeModal();
-      router.push(`/playground/prototypes/${data.slug}`);
+      window.open(`/playground/prototypes/${data.slug}`, "_blank");
     } catch {
       setFormError("Failed to create prototype. Please try again.");
       setIsSubmitting(false);
     }
   };
 
-  // Handle Escape key to close modal
+  // Handle Escape key to close modals
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isModalOpen) {
-        closeModal();
+      if (e.key === "Escape") {
+        if (isModalOpen) {
+          closeModal();
+        }
+        if (deleteTarget) {
+          closeDeleteModal();
+        }
       }
     };
 
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [isModalOpen, closeModal]);
+  }, [isModalOpen, closeModal, deleteTarget, closeDeleteModal]);
 
   // Handle click outside modal to close
   const handleOverlayClick = (e: React.MouseEvent) => {
@@ -216,56 +314,41 @@ export default function Playground() {
           <section className="Playground__section">
             <h2 className="Playground__section-title">MINKYEONG</h2>
             <div className="Playground__list">
-              {activeItems.map((item) =>
-                item.type === "external" ? (
-                  <a
-                    key={item.id}
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="Playground__card"
-                  >
-                    <div className="Playground__card-content">
-                      <div className="Playground__card-name">
-                        {item.name}
+              {activeItems.map((item) => (
+                <a
+                  key={item.id}
+                  href={item.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="Playground__card"
+                >
+                  <div className="Playground__card-content">
+                    <div className="Playground__card-name">
+                      {item.name}
+                      {item.type === "external" && (
                         <span className="Playground__card-badge">External</span>
-                      </div>
-                      <div className="Playground__card-description">
-                        {item.description}
-                      </div>
+                      )}
                     </div>
-                    <div className="Playground__card-meta">
-                      <span className="Playground__card-timestamp">
-                        {item.date}
-                      </span>
-                      <span className="Playground__card-open">
-                        <Icon.LinkExternal01 />
-                      </span>
+                    <div className="Playground__card-description">
+                      {item.description}
                     </div>
-                  </a>
-                ) : (
-                  <Link
-                    key={item.id}
-                    href={item.href}
-                    className="Playground__card"
-                  >
-                    <div className="Playground__card-content">
-                      <div className="Playground__card-name">{item.name}</div>
-                      <div className="Playground__card-description">
-                        {item.description}
-                      </div>
-                    </div>
-                    <div className="Playground__card-meta">
-                      <span className="Playground__card-timestamp">
-                        {item.date}
-                      </span>
-                      <span className="Playground__card-open">
-                        <Icon.ChevronRight />
-                      </span>
-                    </div>
-                  </Link>
-                ),
-              )}
+                  </div>
+                  <div className="Playground__card-meta">
+                    <span className="Playground__card-timestamp">
+                      {item.date}
+                    </span>
+                    {isDev && (
+                      <button
+                        className="Playground__card-delete"
+                        onClick={(e) => openDeleteModal(e, item)}
+                        aria-label={`Delete ${item.name}`}
+                      >
+                        <Icon.Trash01 />
+                      </button>
+                    )}
+                  </div>
+                </a>
+              ))}
             </div>
           </section>
         ) : (
@@ -327,6 +410,61 @@ export default function Playground() {
                 />
               </div>
 
+              <div className="Playground__form-field">
+                <label className="Playground__form-label">Start from</label>
+                <div className="Playground__form-radio-group">
+                  <label className="Playground__form-radio">
+                    <input
+                      type="radio"
+                      name="startFrom"
+                      value="blank"
+                      checked={formStartFrom === "blank"}
+                      onChange={() => {
+                        setFormStartFrom("blank");
+                        setFormExistingPage("");
+                      }}
+                      disabled={isSubmitting}
+                    />
+                    <span>Blank page</span>
+                  </label>
+                  <label className="Playground__form-radio">
+                    <input
+                      type="radio"
+                      name="startFrom"
+                      value="existing"
+                      checked={formStartFrom === "existing"}
+                      onChange={() => setFormStartFrom("existing")}
+                      disabled={isSubmitting}
+                    />
+                    <span>Existing Lab page</span>
+                  </label>
+                </div>
+
+                {formStartFrom === "existing" && (
+                  <select
+                    className="Playground__form-select"
+                    value={formExistingPage}
+                    onChange={(e) => setFormExistingPage(e.target.value)}
+                    disabled={isSubmitting}
+                  >
+                    <option value="">Select a page...</option>
+                    {["Transactions", "XDR", "Account", "Smart Contracts"].map(
+                      (category) => (
+                        <optgroup key={category} label={category}>
+                          {EXISTING_PAGES.filter(
+                            (p) => p.category === category,
+                          ).map((page) => (
+                            <option key={page.key} value={page.key}>
+                              {page.label}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ),
+                    )}
+                  </select>
+                )}
+              </div>
+
               {formError && (
                 <div className="Playground__form-error">{formError}</div>
               )}
@@ -349,6 +487,61 @@ export default function Playground() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div
+          className="Playground__modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              closeDeleteModal();
+            }
+          }}
+        >
+          <div className="Playground__modal Playground__modal--delete">
+            <div className="Playground__modal-header">
+              <h2 className="Playground__modal-title">Delete prototype</h2>
+              <button
+                className="Playground__modal-close"
+                onClick={closeDeleteModal}
+                aria-label="Close modal"
+              >
+                <Icon.XClose />
+              </button>
+            </div>
+
+            <div className="Playground__modal-body">
+              <p>
+                Delete &ldquo;{deleteTarget.name}&rdquo; prototype? This cannot
+                be undone.
+              </p>
+
+              {deleteError && (
+                <div className="Playground__form-error">{deleteError}</div>
+              )}
+            </div>
+
+            <div className="Playground__modal-actions">
+              <button
+                type="button"
+                className="Playground__modal-cancel"
+                onClick={closeDeleteModal}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="Playground__modal-submit Playground__modal-submit--danger"
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
           </div>
         </div>
       )}

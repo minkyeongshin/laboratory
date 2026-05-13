@@ -404,6 +404,20 @@
       padding: 0;
       background-color: var(--sds-clr-gray-01);
     }
+
+    // Full width container for minimal chrome (no sidebar)
+    &--full {
+      flex: 1;
+      overflow-y: auto;
+    }
+  }
+
+  // Minimal chrome mode (blank prototypes)
+  &--minimal {
+    .LabLayout__content {
+      width: 100%;
+      max-width: pxToRem(1280px);
+    }
   }
 
   &__content {
