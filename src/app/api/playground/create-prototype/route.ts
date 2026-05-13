@@ -449,6 +449,22 @@ export default function ${pascalName}Prototype() {
     );
     fs.writeFileSync(path.join(prototypeDir, "mock-data.ts"), mockDataContent);
 
+    // Pre-warm the route by fetching it, triggering Next.js compilation
+    // This ensures the route is ready when the user's new tab opens
+    const host = request.headers.get("host") || "localhost:3000";
+    const protocol = host.includes("localhost") ? "http" : "https";
+    const prototypeUrl = `${protocol}://${host}/playground/prototypes/${slug}`;
+
+    try {
+      await fetch(prototypeUrl, {
+        method: "GET",
+        signal: AbortSignal.timeout(15000), // 15s timeout for compilation
+      });
+    } catch {
+      // Ignore errors — the route is now registered regardless of response status
+      // Even a 500 during initial render means Next.js has compiled the route
+    }
+
     return NextResponse.json({ slug });
   } catch (error) {
     // Cleanup: remove partially created directory

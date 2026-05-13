@@ -514,10 +514,6 @@ export default function Playground() {
                 </button>
               </div>
 
-              <p className="Playground__modal-hint">
-                If the new tab shows a 404, refresh — Next.js needs a moment to
-                register new routes.
-              </p>
             </form>
           </div>
         </div>
