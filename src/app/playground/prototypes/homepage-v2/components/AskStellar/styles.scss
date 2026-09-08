@@ -107,9 +107,19 @@
   // SDS <Button> is not used because its chrome (background, border, fixed
   // height) would fight a hairline-separated text row.
   &__suggestionButton {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: pxToRem(8px);
     width: 100%;
     text-align: left;
+
+    svg {
+      flex-shrink: 0;
+      width: pxToRem(16px);
+      height: pxToRem(16px);
+      color: var(--sds-clr-gray-11);
+    }
     background: transparent;
     border: none;
     cursor: pointer;

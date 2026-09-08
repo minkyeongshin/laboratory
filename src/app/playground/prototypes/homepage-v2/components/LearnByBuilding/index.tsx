@@ -32,7 +32,7 @@ export const LearnByBuilding = ({ imgTheme }: { imgTheme: ImgTheme }) => (
           >
             <Image src={item.image[imgTheme]} alt="" aria-hidden="true" />
             <span className="LearnByBuilding__play" aria-hidden="true">
-              <Icon.PlayCircle />
+              <Icon.Play />
             </span>
           </NextLink>
 

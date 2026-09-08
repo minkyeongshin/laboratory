@@ -26,26 +26,38 @@
     }
 
     @media (hover: hover) {
-      &:hover .LearnByBuilding__play svg {
-        color: var(--sds-clr-lilac-11);
+      &:hover .LearnByBuilding__play {
+        transform: translate(-50%, -50%) scale(1.08);
       }
     }
   }
 
+  // A filled disc rather than an outline glyph: it has to read as "video" at a
+  // glance on top of a busy screenshot. gray-12 on base-00 is theme-correct in
+  // both modes (dark disc / light triangle in light, and inverted in dark).
   &__play {
     position: absolute;
-    inset: 0;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     display: flex;
     align-items: center;
     justify-content: center;
+    width: pxToRem(40px);
+    height: pxToRem(40px);
+    border-radius: 50%;
+    background-color: var(--sds-clr-gray-12);
+    transition: transform 0.15s ease;
 
     svg {
-      width: pxToRem(24px);
-      height: pxToRem(24px);
-      color: var(--sds-clr-gray-01);
-      // The glyph is drawn over a screenshot, so it needs its own contrast.
-      filter: drop-shadow(0 1px 2px rgb(0 0 0 / 40%));
-      transition: color 0.15s ease;
+      width: pxToRem(16px);
+      height: pxToRem(16px);
+      color: var(--sds-clr-base-00);
+      // Play is a closed triangle path, so filling it reads solid instead of
+      // as an outline. CSS wins over the inline presentation attribute.
+      fill: currentColor;
+      // Optical centring — a triangle's visual mass sits left of its box.
+      margin-left: pxToRem(2px);
     }
   }
 

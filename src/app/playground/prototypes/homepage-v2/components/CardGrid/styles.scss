@@ -30,6 +30,9 @@
     padding: pxToRem(24px);
     // Cells in a row must match height for the dividers to run full-bleed.
     height: 100%;
+    // Rebalances the last line so descriptions don't end on a single word.
+    // Handles the orphans without rewriting approved copy.
+    text-wrap: pretty;
   }
 
   // Cells rendered as links: strip the anchor defaults, keep the card shape.

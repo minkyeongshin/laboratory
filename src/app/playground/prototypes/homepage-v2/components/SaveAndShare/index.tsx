@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Button, Icon, Text } from "@stellar/design-system";
+import { Button, Icon } from "@stellar/design-system";
 
 import { Box } from "@/components/layout/Box";
 
+import { SectionHeader } from "../SectionHeader";
 import { mockSaveAndShare, type ImgTheme } from "../../mock-data";
 
 import "./styles.scss";
@@ -16,15 +17,12 @@ export const SaveAndShare = ({ imgTheme }: { imgTheme: ImgTheme }) => {
   return (
     <div className="SaveAndShare">
       <Box gap="custom" customValue="16px" addlClassName="SaveAndShare__copy">
-        <Box gap="custom" customValue="8px">
-          <Text as="h2" size="lg" weight="medium">
-            {mockSaveAndShare.title}
-          </Text>
-
-          <Text as="p" size="sm" addlClassName="SaveAndShare__description">
-            {mockSaveAndShare.description}
-          </Text>
-        </Box>
+        {/* SectionHeader rather than a local heading, so this title can't
+            drift from the other section titles. */}
+        <SectionHeader
+          title={mockSaveAndShare.title}
+          description={mockSaveAndShare.description}
+        />
 
         <div>
           <Button

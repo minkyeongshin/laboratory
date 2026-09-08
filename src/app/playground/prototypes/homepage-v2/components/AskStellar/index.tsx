@@ -90,6 +90,9 @@ export const AskStellar = ({
               <Text as="span" size="sm">
                 {suggestion}
               </Text>
+              {/* Always visible, not hover-only, so the rows read as
+                  actionable at rest. */}
+              <Icon.ArrowRight />
             </button>
           </li>
         ))}

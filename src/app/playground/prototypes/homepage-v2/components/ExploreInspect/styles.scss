@@ -9,12 +9,12 @@
 
   &__icon {
     display: block;
-    margin-bottom: pxToRem(12px);
+    margin-bottom: pxToRem(16px);
 
     svg {
       width: pxToRem(20px);
       height: pxToRem(20px);
-      color: var(--sds-clr-gray-11);
+      color: var(--sds-clr-gray-12);
     }
   }
 

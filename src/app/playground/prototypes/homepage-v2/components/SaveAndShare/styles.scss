@@ -9,14 +9,6 @@
   &__copy {
     flex: 0 0 pxToRem(341px);
     max-width: pxToRem(341px);
-
-    h2 {
-      color: var(--sds-clr-gray-12);
-    }
-  }
-
-  &__description {
-    color: var(--sds-clr-gray-11);
   }
 
   &__art {

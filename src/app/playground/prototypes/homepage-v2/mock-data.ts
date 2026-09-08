@@ -45,7 +45,7 @@ export const mockStartBuilding: LinkCard[] = [
   {
     id: "fund-account",
     title: "Fund account",
-    description: "Fund an account with test assets.",
+    description: "Fund a test account.",
     route: Routes.ACCOUNT_FUND,
   },
   {
@@ -86,7 +86,7 @@ export const mockExploreInspect: LinkCard[] = [
   {
     id: "api-explorer",
     title: "API explorer",
-    description: "Explore and test Stellar RPC methods and Horizon endpoints.",
+    description: "Explore Stellar RPC methods and Horizon endpoints.",
     route: Routes.ENDPOINTS,
   },
   {
