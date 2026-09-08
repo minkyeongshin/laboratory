@@ -25,10 +25,12 @@ Built from Figma node `9477:68721`.
 
 - **Ask Stellar answers, but there is no API.** The input, the suggestion rows,
   and the panel's own composer all work — they open the panel and append user
-  bubbles — but **every question returns the same canned deploy-contract
-  reply**, taken from the Figma frame. Multi-turn is visual only: no request is
-  made, nothing is streamed, and the answer ignores what was asked. It will
-  read as obviously wrong for "Explain an XDR", which is expected.
+  bubbles — but every reply is hand-written. Each of the three suggestions has
+  its own on-topic answer and action buttons (deploy → Deploy contract, XDR →
+  View XDR, debug → Transaction dashboard), keyed by the exact suggestion text
+  in `mock-data.ts`. **Anything typed freehand falls back to the deploy reply**,
+  so a typed question will usually be answered off-topic. Nothing is requested
+  or streamed, and multi-turn is visual only.
 - **The conversation is not persisted.** Closing the panel discards it.
 - **The floating Ask Stellar pill is not on the home page.** Both the Ask
   Stellar input and the suggestion rows open the chat panel, which made the

@@ -7,10 +7,7 @@ import { Button, Icon, Text } from "@stellar/design-system";
 
 import { openUrl } from "@/helpers/openUrl";
 
-import {
-  mockAskStellarActions,
-  mockAskStellarReply,
-} from "../../mock-data";
+import { getMockAskStellarReply } from "../../mock-data";
 import sparkle from "../../assets/ask-stellar-sparkle.svg";
 
 import "./styles.scss";
@@ -20,8 +17,9 @@ import "./styles.scss";
 // The interactive pieces inside it are all SDS: the two action buttons map to
 // Button secondary/tertiary at size md with no overrides.
 //
-// TODO: no API. Every question returns the same canned reply, so multi-turn is
-// visual only and the answer ignores what was actually asked.
+// TODO: no API. Replies are hand-written and keyed by suggestion text, so the
+// three suggestions answer on topic but anything typed freehand falls back to
+// the deploy reply. Multi-turn is visual only.
 
 export const AskStellarPanel = ({
   messages,
@@ -106,7 +104,9 @@ export const AskStellarPanel = ({
 
       <div className="AskStellarPanel__messages" ref={scrollEl}>
         {messages.map((message, idx) => {
-          const isLast = idx === messages.length - 1;
+          // Each answer carries its own actions, so they follow every reply
+          // rather than only the last one.
+          const reply = getMockAskStellarReply(message);
 
           return (
             <div className="AskStellarPanel__exchange" key={`${message}-${idx}`}>
@@ -118,32 +118,30 @@ export const AskStellarPanel = ({
 
               <div className="AskStellarPanel__bubble" data-from="assistant">
                 <Text as="div" size="sm">
-                  {mockAskStellarReply}
+                  {reply.body}
                 </Text>
               </div>
 
-              {isLast ? (
-                <div className="AskStellarPanel__actions">
-                  {mockAskStellarActions.map((action) => (
-                    <Button
-                      key={action.id}
-                      size="md"
-                      variant={action.variant}
-                      icon={<Icon.ArrowUpRight />}
-                      iconPosition="right"
-                      onClick={() => {
-                        if (action.url) {
-                          openUrl(action.url);
-                        } else if (action.route) {
-                          router.push(action.route);
-                        }
-                      }}
-                    >
-                      {action.label}
-                    </Button>
-                  ))}
-                </div>
-              ) : null}
+              <div className="AskStellarPanel__actions">
+                {reply.actions.map((action) => (
+                  <Button
+                    key={action.id}
+                    size="md"
+                    variant={action.variant}
+                    icon={<Icon.ArrowUpRight />}
+                    iconPosition="right"
+                    onClick={() => {
+                      if (action.url) {
+                        openUrl(action.url);
+                      } else if (action.route) {
+                        router.push(action.route);
+                      }
+                    }}
+                  >
+                    {action.label}
+                  </Button>
+                ))}
+              </div>
             </div>
           );
         })}
