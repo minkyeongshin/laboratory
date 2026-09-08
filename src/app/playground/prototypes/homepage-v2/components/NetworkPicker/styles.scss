@@ -1,6 +1,16 @@
 @use "../../../../../../styles/utils.scss" as *;
 
 .NetworkPicker {
+  // Only the active network shows its colour; the other two dots go grey.
+  // #8f8f8f in the Figma export = --sds-clr-gray-09.
+  //
+  // SDS sets the colour via `.NetworkIndicator__dot[data-network="x"]`
+  // (specificity 0,2,0), so this selector deliberately runs at 0,4,0 to win
+  // regardless of stylesheet order.
+  &__indicator[data-is-active="false"] .NetworkIndicator__dot[data-network] {
+    --NetworkSelector-dot-color: var(--sds-clr-gray-09);
+  }
+
   &__description {
     color: var(--sds-clr-gray-11);
   }

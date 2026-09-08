@@ -5,7 +5,7 @@ import "./styles.scss";
 
 // Created instead of using SDS <Card> because:
 // - <Card> renders a single bordered box with fixed padding and only
-//   borderRadiusSize "sm" | "md". Home v2 needs one r6 container whose cells
+//   borderRadiusSize "sm" | "md". Home v2 needs one r16 container whose cells
 //   are separated by 1px dividers with no gaps between them.
 // - Composing N <Card>s gives N independent borders, so every seam is 2px and
 //   there is a gap where the design has a hairline.

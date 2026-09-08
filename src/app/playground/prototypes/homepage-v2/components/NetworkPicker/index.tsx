@@ -31,7 +31,19 @@ export const NetworkPicker = () => {
         return (
           <CardGrid.Cell key={item.id}>
             <Box gap="custom" customValue="4px">
-              <NetworkIndicator networkId={item.id} networkLabel={item.title} />
+              {/* NetworkIndicator always paints its per-network dot colour and
+                  exposes no inactive state, so the wrapper greys the dot when
+                  this card isn't the active network. The production component
+                  is left untouched. */}
+              <div
+                className="NetworkPicker__indicator"
+                data-is-active={isActive}
+              >
+                <NetworkIndicator
+                  networkId={item.id}
+                  networkLabel={item.title}
+                />
+              </div>
 
               <Text as="p" size="sm" addlClassName="NetworkPicker__description">
                 {item.description}
