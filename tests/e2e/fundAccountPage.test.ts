@@ -26,7 +26,7 @@ test.describe("[futurenet/testnet] Fund Account Page", () => {
       "Testnet",
     );
     await expect(page.locator("h1")).toHaveText(
-      "Friendbot: fund a Testnet account or contract with XLM, USDC, and EURC",
+      "Fund a Testnet account or contract with XLM, USDC, and EURC",
     );
   });
 
@@ -58,7 +58,7 @@ test.describe("[futurenet/testnet] Fund Account Page", () => {
       "Futurenet",
     );
     await expect(page.locator("h1")).toHaveText(
-      "Friendbot: fund a Futurenet account or contract with XLM, USDC, and EURC",
+      "Fund a Futurenet account or contract with XLM, USDC, and EURC",
     );
   });
 
@@ -186,7 +186,7 @@ test.describe("[futurenet/testnet] Fund Account Page", () => {
 
     const signTxButton = signTxBox
       .getByRole("button")
-      .getByText("Sign transaction");
+      .getByText("Sign", { exact: true });
     const addTrustlineButton = page
       .getByRole("button")
       .getByText("Add trustline")

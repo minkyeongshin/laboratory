@@ -16,7 +16,6 @@ import { AuthorizePicker } from "@/components/FormElements/AuthorizePicker";
 import { NumberFractionPicker } from "@/components/FormElements/NumberFractionPicker";
 import { RevokeSponsorshipPicker } from "@/components/FormElements/RevokeSponsorshipPicker";
 import { ClaimantsPicker } from "@/components/FormElements/ClaimantsPicker";
-import { ResourceFeePickerWithQuery } from "@/components/FormElements/ResourceFeePickerWithQuery";
 import { FetchContractMethodPickerWithQuery } from "@/components/FormElements/FetchContractMethodPickerWithQuery";
 import { MultiLedgerEntriesPicker } from "@/components/FormElements/XdrLedgerKeyPicker";
 
@@ -359,7 +358,7 @@ export const formComponentTemplateTxnOps = ({
     case "destination":
       return {
         render: (templ: TemplateRenderProps) => (
-          <PubKeyPicker
+          <PubKeyPickerWithSignerSelector
             key={id}
             id={id}
             label="Destination"
@@ -448,7 +447,7 @@ export const formComponentTemplateTxnOps = ({
             value={templ.value || ""}
             error={templ.error}
             onChange={templ.onChange}
-            infoLink="https://developers.stellar.org/docs/glossary#home-domain"
+            infoLink="https://developers.stellar.org/docs/learn/glossary#home-domain"
           />
         ),
         validate: validate.getHomeDomainError,
@@ -464,7 +463,7 @@ export const formComponentTemplateTxnOps = ({
             value={templ.value || ""}
             error={templ.error}
             onChange={templ.onChange}
-            infoLink="https://developers.stellar.org/docs/learn/encyclopedia/inflation"
+            infoLink="https://developers.stellar.org/docs/learn/glossary#inflation"
           />
         ),
         validate: validate.getPublicKeyError,
@@ -503,34 +502,6 @@ export const formComponentTemplateTxnOps = ({
         ),
         validate: null,
       };
-    // Soroban Only
-    case "resource_fee":
-      return {
-        render: (templ: TemplateRenderSorobanProps) => (
-          <ResourceFeePickerWithQuery
-            id={id}
-            label="Resource fee (in stroops)"
-            value={removeLeadingZeroes(templ.value || "")}
-            error={templ.error}
-            onChange={templ.onChange}
-            disabled={templ.isDisabled}
-            note={
-              <>
-                The best way to find the required resource fee for any smart
-                contract transaction is to use the{" "}
-                <SdsLink href="https://developers.stellar.org/docs/learn/encyclopedia/contract-development/contract-interactions/transaction-simulation">
-                  simulateTransaction endpoint
-                </SdsLink>{" "}
-                from the RPC, which enables you to send a preflight transaction
-                that will return the necessary resource values and resource fee.
-              </>
-            }
-            infoLink="https://developers.stellar.org/docs/learn/fundamentals/fees-resource-limits-metering#resource-fee"
-          />
-        ),
-        validate: validate.getPositiveNumberError,
-      };
-
     // Custom Soroban Operation
     case "invoke_contract":
       return {
@@ -617,9 +588,8 @@ export const formComponentTemplateTxnOps = ({
     case "high_threshold":
       return {
         render: (templ: TemplateRenderProps) => (
-          <Box gap="xs">
+          <Box gap="xs" key={id}>
             <PositiveIntPicker
-              key={id}
               id={id}
               label={custom?.label || "Threshold"}
               labelSuffix={!templ.isRequired ? "optional" : undefined}
@@ -775,7 +745,7 @@ export const formComponentTemplateTxnOps = ({
             error={templ.error}
             onChange={templ.onChange}
             note="Used to add/remove or adjust weight of an additional signer on the account."
-            infoLink="https://developers.stellar.org/docs/encyclopedia/signatures-multisig#multisig"
+            infoLink="https://developers.stellar.org/docs/learn/fundamentals/transactions/signatures-multisig#multisig"
           />
         ),
         validate: validate.getOptionsSignerError,
@@ -790,11 +760,7 @@ export const formComponentTemplateTxnOps = ({
             labelSuffix={!templ.isRequired ? "optional" : undefined}
             value={templ.value || ""}
             error={templ.error}
-            onChange={(val) =>
-              templ.onChange({
-                target: { value: val },
-              } as React.ChangeEvent<HTMLInputElement>)
-            }
+            onChange={templ.onChange}
           />
         ),
         validate: validate.getPublicKeyError,

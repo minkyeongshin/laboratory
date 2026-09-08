@@ -1,9 +1,31 @@
 "use client";
 
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
-import { Badge, Icon, Link, Tooltip } from "@stellar/design-system";
+import { Badge, Icon, Link, Tooltip, Text } from "@stellar/design-system";
 
 import { BuildVerificationStatus } from "@/types/types";
+
+/**
+ * Copy explaining what a SEP-55 verified build does and does not prove.
+ * Shared between the badge tooltip and the persistent banner in the Contract
+ * Explorer so the two cannot drift apart.
+ */
+export const VerifiedBuildMessage = () => (
+  <>
+    This contract’s deployed Wasm matches a GitHub Actions build attestation
+    from the source repository the contract declares, as described in{" "}
+    <Link
+      variant="primary"
+      href="https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0055.md"
+    >
+      SEP-55
+    </Link>
+    .{" "}
+    <Text as="span" size="sm" weight="medium">
+      It confirms build provenance, not source code correctness or safety.
+    </Text>
+  </>
+);
 
 export const BuildVerifiedBadge = ({
   status,
@@ -37,35 +59,6 @@ export const BuildVerifiedBadge = ({
   }, [handleClickOutside, isBadgeTooltipVisible]);
 
   const item = {
-    verified: {
-      badge: (
-        <Badge variant="success" icon={<Icon.CheckCircle />}>
-          Build Verified
-        </Badge>
-      ),
-      message: (
-        <>
-          <code>Build Verified</code> means that a GitHub Action run has
-          attested to have built the Wasm, but does not verify the source code.
-        </>
-      ),
-    },
-    unverified: {
-      badge: (
-        <Badge variant="error" icon={<Icon.XCircle />}>
-          Build Unverified
-        </Badge>
-      ),
-      message: (
-        <>
-          This contract has no build verification configured. Please see{" "}
-          <Link href="https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0055.md#attestation-verification-flow">
-            verification setup instructions
-          </Link>{" "}
-          for more info.
-        </>
-      ),
-    },
     built_in: {
       badge: (
         <Badge variant="success" icon={<Icon.CheckCircle />}>
@@ -85,6 +78,40 @@ export const BuildVerifiedBadge = ({
             CAP-46-06
           </Link>
           .
+        </>
+      ),
+    },
+    verified_build: {
+      badge: (
+        <Badge variant="primary" icon={<Icon.CheckCircle />}>
+          Verified Build
+        </Badge>
+      ),
+      message: <VerifiedBuildMessage />,
+    },
+    unverified_build: {
+      badge: (
+        <Badge variant="error" icon={<Icon.XCircle />}>
+          Unverified Build
+        </Badge>
+      ),
+      message: (
+        <>
+          This contract has no build verification. The origin of deployed Wasm
+          is not verified.
+        </>
+      ),
+    },
+    source_code_unverified: {
+      badge: (
+        <Badge variant="warning" icon={<Icon.XCircle />}>
+          Unverified Source Code
+        </Badge>
+      ),
+      message: (
+        <>
+          The source code is not verified and may not reflect the contract’s
+          on-chain behavior.
         </>
       ),
     },

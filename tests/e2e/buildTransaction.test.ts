@@ -1,6 +1,6 @@
 import { baseURL } from "../../playwright.config";
 import { test, expect, Page } from "@playwright/test";
-import { mockSimulateTx } from "./mock/helpers";
+import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 
 test.describe("Build Transaction Page", () => {
   test.beforeEach(async ({ page }) => {
@@ -34,10 +34,6 @@ test.describe("Build Transaction Page", () => {
     await page.getByLabel("Source account").fill(SOURCE_ACCOUNT);
     await page.getByLabel("Transaction sequence number").fill(SEQUENCE_NUMBER);
 
-    const saveTxButton = page.getByTitle("Save transaction");
-
-    await expect(saveTxButton).toBeDisabled();
-
     const { operation_0 } = await selectOperationType({
       page,
       opType: "create_account",
@@ -46,8 +42,7 @@ test.describe("Build Transaction Page", () => {
     await operation_0.getByLabel("Destination").fill(ACCOUNT_ONE);
     await operation_0.getByLabel("Starting balance").fill("1");
 
-    await expect(saveTxButton).toBeEnabled();
-    await saveTxButton.click();
+    await page.getByTestId("save-to-local-storage-button").click();
 
     const modal = page.locator(".Modal");
 
@@ -125,9 +120,19 @@ test.describe("Build Transaction Page", () => {
         /Mon, Oct 21, 2024, 13:29:00 UTC/,
       );
 
+      // Add an operation so an XDR is built — Clear all is disabled until then
+      const { operation_0 } = await selectOperationType({
+        page,
+        opType: "create_account",
+      });
+      await operation_0.getByLabel("Destination").fill(ACCOUNT_ONE);
+      await operation_0.getByLabel("Starting balance").fill("1");
+
       // Clear params
       await expect(paramsErrors).toBeHidden();
-      await page.getByText("Clear Params").click();
+      await expect(page.getByTestId("clear-all-button")).toBeEnabled();
+      await page.getByTestId("clear-all-button").click();
+      await page.getByText("Clear all").click();
       await expect(paramsErrors).toBeVisible();
     });
 
@@ -1320,7 +1325,7 @@ test.describe("Build Transaction Page", () => {
         // Verify warning message about one operation limit
         await expect(
           page.getByText(
-            "Note that Soroban transactions can only contain one operation per transaction.",
+            "Soroban transaction can only contain one operation per transaction.",
           ),
         ).toBeVisible();
 
@@ -1372,30 +1377,10 @@ test.describe("Build Transaction Page", () => {
 
         await soroban_operation.getByLabel("Extend To").fill("2363185");
 
-        await soroban_operation
-          .getByLabel("Resource Fee (in stroops)")
-          .fill("60528");
-
-        const prepareTxButton = page.getByText(
-          "Prepare Soroban Transaction to Sign",
-        );
-
-        // Mock simulate transaction RPC call
-        await mockSimulateTx({
-          page,
-          responseXdr:
-            "AAAAAAAAAAEAAAAGAAAAASAi1W4KumRRb25iYE0pYjK+hk/9+4TVhhPnQjys4CsoAAAAEAAAAAEAAAACAAAADwAAAAdCYWxhbmNlAAAAABIAAAABhJOf5nl4Ckvd0A0luFhIy7AmbhcWcGZUrcpt0K5oj5wAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOxy",
-        });
-
-        await expect(prepareTxButton).toBeEnabled();
-        await prepareTxButton.click();
-
-        await testOpSuccessHashAndXdr({
-          isSorobanOp: true,
-          page,
-          hash: "6eaff5a4593b5387b5898d4575fa857fa58754817c8ddb80a6c6008e2191b11c",
-          xdr: "AAAAAgAAAAANLHqVohDTxPKQ3fawTPgHahe0TzJjJkWV1WakcbeADgACWZEAD95QAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAGQAAAAAAJA8xAAAAAQAAAAAAAAABAAAABgAAAAEgItVuCrpkUW9uYmBNKWIyvoZP/fuE1YYT50I8rOArKAAAABAAAAABAAAAAgAAAA8AAAAHQmFsYW5jZQAAAAASAAAAAYSTn+Z5eApL3dANJbhYSMuwJm4XFnBmVK3KbdCuaI+cAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAADscgAAAAA=",
-        });
+        // In the new flow, extend_footprint_ttl does not produce XDR on
+        // the build step — verify the Next button is enabled (form valid).
+        const nextButton = page.locator('[data-position="right"]');
+        await expect(nextButton).toBeEnabled();
       });
 
       test("[Use Contract Data Key] Happy path", async ({ page }) => {
@@ -1414,7 +1399,7 @@ test.describe("Build Transaction Page", () => {
         // Verify warning message about one operation limit
         await expect(
           page.getByText(
-            "Note that Soroban transactions can only contain one operation per transaction.",
+            "Soroban transaction can only contain one operation per transaction.",
           ),
         ).toBeVisible();
 
@@ -1510,30 +1495,10 @@ test.describe("Build Transaction Page", () => {
 
         await soroban_operation.getByLabel("Extend To").fill("2363185");
 
-        await soroban_operation
-          .getByLabel("Resource Fee (in stroops)")
-          .fill("60528");
-
-        const prepareTxButton = page.getByText(
-          "Prepare Soroban Transaction to Sign",
-        );
-
-        // Mock simulate transaction RPC call
-        await mockSimulateTx({
-          page,
-          responseXdr:
-            "AAAAAAAAAAEAAAAGAAAAASAi1W4KumRRb25iYE0pYjK+hk/9+4TVhhPnQjys4CsoAAAAEAAAAAEAAAACAAAADwAAAAdCYWxhbmNlAAAAABIAAAABhJOf5nl4Ckvd0A0luFhIy7AmbhcWcGZUrcpt0K5oj5wAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOxy",
-        });
-
-        await expect(prepareTxButton).toBeEnabled();
-        await prepareTxButton.click();
-
-        await testOpSuccessHashAndXdr({
-          isSorobanOp: true,
-          page,
-          hash: "6eaff5a4593b5387b5898d4575fa857fa58754817c8ddb80a6c6008e2191b11c",
-          xdr: "AAAAAgAAAAANLHqVohDTxPKQ3fawTPgHahe0TzJjJkWV1WakcbeADgACWZEAD95QAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAGQAAAAAAJA8xAAAAAQAAAAAAAAABAAAABgAAAAEgItVuCrpkUW9uYmBNKWIyvoZP/fuE1YYT50I8rOArKAAAABAAAAABAAAAAgAAAA8AAAAHQmFsYW5jZQAAAAASAAAAAYSTn+Z5eApL3dANJbhYSMuwJm4XFnBmVK3KbdCuaI+cAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAADscgAAAAA=",
-        });
+        // In the new flow, extend_footprint_ttl does not produce XDR on
+        // the build step — verify the Next button is enabled (form valid).
+        const nextButton = page.locator('[data-position="right"]');
+        await expect(nextButton).toBeEnabled();
       });
 
       test("[Use Contract Data Key] Validation", async ({ page }) => {
@@ -1586,15 +1551,6 @@ test.describe("Build Transaction Page", () => {
           errorMessage: "Expected a whole number.",
         });
 
-        await testInputError({
-          page,
-          isSorobanOp: true,
-          label: "Resource Fee (in stroops)",
-          value: "aaa",
-          errorMessage:
-            "Expected a positive number with a period for the decimal point.",
-        });
-
         const scValInput = soroban_operation.getByLabel("Key (ScVal)");
         const stringifiedScVal = JSON.stringify(
           {
@@ -1639,7 +1595,7 @@ test.describe("Build Transaction Page", () => {
         // Verify warning message about one operation limit
         await expect(
           page.getByText(
-            "Note that Soroban transactions can only contain one operation per transaction.",
+            "Soroban transaction can only contain one operation per transaction.",
           ),
         ).toBeVisible();
 
@@ -1680,7 +1636,7 @@ test.describe("Build Transaction Page", () => {
         // Verify warning message about one operation limit
         await expect(
           page.getByText(
-            "Note that Soroban transactions can only contain one operation per transaction.",
+            "Soroban transaction can only contain one operation per transaction.",
           ),
         ).toBeVisible();
 
@@ -1730,31 +1686,10 @@ test.describe("Build Transaction Page", () => {
         const durabilityInput = page.locator("#persistent-durability-type");
         await expect(durabilityInput).toBeChecked();
 
-        await soroban_operation
-          .getByLabel("Resource Fee (in stroops)")
-          .fill("20000");
-
-        const prepareTxButton = page.getByText(
-          "Prepare Soroban Transaction to Sign",
-        );
-
-        // Mock simulate transaction RPC call
-        // @TODO update this after investigating restore footprint
-        await mockSimulateTx({
-          page,
-          responseXdr: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATiA=",
-        });
-
-        await expect(prepareTxButton).toBeEnabled();
-        await prepareTxButton.click();
-
-        // @TODO update this after investigating restore footprint
-        await testOpSuccessHashAndXdr({
-          isSorobanOp: true,
-          page,
-          hash: "aa5a5bd20265afdee0d01d36add7b9e67364516e69339313be2c174c8ee81313",
-          xdr: "AAAAAgAAAAANLHqVohDTxPKQ3fawTPgHahe0TzJjJkWV1WakcbeADgABu0EAD95QAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAGgAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATiAAAAAA",
-        });
+        // In the new flow, restore_footprint does not produce XDR on
+        // the build step — verify the Next button is enabled (form valid).
+        const nextButton = page.locator('[data-position="right"]');
+        await expect(nextButton).toBeEnabled();
       });
 
       test("[Use Contract Data Key] Happy path", async ({ page }) => {
@@ -1773,7 +1708,7 @@ test.describe("Build Transaction Page", () => {
         // Verify warning message about one operation limit
         await expect(
           page.getByText(
-            "Note that Soroban transactions can only contain one operation per transaction.",
+            "Soroban transaction can only contain one operation per transaction.",
           ),
         ).toBeVisible();
 
@@ -1867,31 +1802,10 @@ test.describe("Build Transaction Page", () => {
         const durabilityInput = page.locator("#persistent-durability-type");
         await expect(durabilityInput).toBeChecked();
 
-        await soroban_operation
-          .getByLabel("Resource Fee (in stroops)")
-          .fill("20000");
-
-        const prepareTxButton = page.getByText(
-          "Prepare Soroban Transaction to Sign",
-        );
-
-        // Mock simulate transaction RPC call
-        // @TODO update this after investigating restore footprint
-        await mockSimulateTx({
-          page,
-          responseXdr: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATiA=",
-        });
-
-        await expect(prepareTxButton).toBeEnabled();
-        await prepareTxButton.click();
-
-        // @TODO update this after investigating restore footprint
-        await testOpSuccessHashAndXdr({
-          isSorobanOp: true,
-          page,
-          hash: "aa5a5bd20265afdee0d01d36add7b9e67364516e69339313be2c174c8ee81313",
-          xdr: "AAAAAgAAAAANLHqVohDTxPKQ3fawTPgHahe0TzJjJkWV1WakcbeADgABu0EAD95QAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAGgAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAATiAAAAAA",
-        });
+        // In the new flow, restore_footprint does not produce XDR on
+        // the build step — verify the Next button is enabled (form valid).
+        const nextButton = page.locator('[data-position="right"]');
+        await expect(nextButton).toBeEnabled();
       });
 
       test("[Use Contract Data Key] Validation", async ({ page }) => {
@@ -1934,15 +1848,6 @@ test.describe("Build Transaction Page", () => {
           value: "aaa",
           errorMessage:
             "Invalid contract ID. Please enter a valid contract ID.",
-        });
-
-        await testInputError({
-          page,
-          isSorobanOp: true,
-          label: "Resource Fee (in stroops)",
-          value: "aaa",
-          errorMessage:
-            "Expected a positive number with a period for the decimal point.",
         });
 
         const scValInput = soroban_operation.getByLabel("Key (ScVal)");
@@ -1989,7 +1894,7 @@ test.describe("Build Transaction Page", () => {
         // Verify warning message about one operation limit
         await expect(
           page.getByText(
-            "Note that Soroban transactions can only contain one operation per transaction.",
+            "Soroban transaction can only contain one operation per transaction.",
           ),
         ).toBeVisible();
 
@@ -2010,6 +1915,103 @@ test.describe("Build Transaction Page", () => {
 
         await expect(page.getByText("Add operation")).toBeVisible();
       });
+    });
+  });
+
+  test.describe("Account Merge — hydrated params", () => {
+    // account_merge op params { a: ATTACKER, destination: ACCOUNT_ONE }, with
+    // "a" ordered before "destination", serialized via zustand-querystring.
+    const CRAFTED_QUERYSTRING =
+      "$=transaction$build$classic$operations@$operation_type=account_merge&source_account=&params$a=GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5&destination=GC3N3GAECL3PJOWIKAAKPOB677WHCUNWZRULANQMHEIL4WDX5FICMF3I;;;;&params$source_account=GAGSY6UVUIINHRHSSDO7NMCM7ADWUF5UJ4ZGGJSFSXKWNJDRW6AA4H3Q&fee=100&seq_num=4466559829409793&cond$time$min_time=&max_time=;;&memo$;;&isValid$params:true&operations:true;;";
+
+    test("encodes the displayed destination, not the injected key", async ({
+      page,
+    }) => {
+      await page.goto(`${baseURL}/transaction/build?${CRAFTED_QUERYSTRING}`);
+
+      // The operation form shows the "destination" param (benign account).
+      const destinationInput = page
+        .getByTestId("build-transaction-operation-0")
+        .getByLabel("Destination");
+      await expect(destinationInput).toHaveValue(ACCOUNT_ONE);
+
+      // The built XDR must encode ACCOUNT_ONE — the destination the form shows —
+      // and never the injected key GBBD... A positional read would encode GBBD.
+      const txnSuccess = page.getByTestId("build-transaction-envelope-xdr");
+      await expect(txnSuccess).toBeVisible();
+      const xdr = await txnSuccess
+        .getByText("XDR")
+        .locator("+ div")
+        .textContent();
+
+      const decoded = TransactionBuilder.fromXdr(xdr ?? "", Networks.TESTNET);
+      const op = (decoded as any).operations[0];
+      expect(op.type).toBe("accountMerge");
+      expect(op.destination).toBe(ACCOUNT_ONE);
+      expect(op.destination).not.toBe(
+        "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+      );
+    });
+  });
+
+  // Security regression: the transaction memo must be encoded as the type the
+  // form displays. A crafted share link can inject an extra memo key (e.g.
+  // { text: "…", id: "…" }); the form shows the first entry (Text) while a
+  // by-key `value.id` read would encode a numeric ID memo instead — signing a
+  // different memo than the one shown, which can misroute custodial deposits.
+  test.describe("Memo — hydrated params", () => {
+    // params.memo { text: "benign note", id: "666" }, "text" ordered first,
+    // serialized via zustand-querystring the same way the store hydrates it.
+    const CRAFTED_QUERYSTRING =
+      "$=transaction$build$classic$operations@$operation_type=account_merge&source_account=&params$destination=GC3N3GAECL3PJOWIKAAKPOB677WHCUNWZRULANQMHEIL4WDX5FICMF3I;;;;&params$source_account=GAGSY6UVUIINHRHSSDO7NMCM7ADWUF5UJ4ZGGJSFSXKWNJDRW6AA4H3Q&fee=100&seq_num=4466559829409793&cond$time$min_time=&max_time=;;&memo$text=benign%20note&id=666;;&isValid$params:true&operations:true;;";
+
+    test("encodes the displayed memo type, not an injected key", async ({
+      page,
+    }) => {
+      await page.goto(`${baseURL}/transaction/build?${CRAFTED_QUERYSTRING}`);
+
+      // The form shows a Text memo "benign note" (the first entry), not "666".
+      await expect(page.locator("#memo_value")).toHaveValue("benign note");
+
+      // The built XDR must carry that Text memo — never a MEMO_ID 666. A by-key
+      // `value.id` read would encode the injected id and diverge from the form.
+      const txnSuccess = page.getByTestId("build-transaction-envelope-xdr");
+      await expect(txnSuccess).toBeVisible();
+      const xdr = await txnSuccess
+        .getByText("XDR")
+        .locator("+ div")
+        .textContent();
+
+      const decoded = TransactionBuilder.fromXdr(
+        xdr ?? "",
+        Networks.TESTNET,
+      ) as any;
+      expect(decoded.memo.type).toBe("text");
+      expect(Buffer.from(decoded.memo.value)?.toString()).toBe("benign note");
+      expect(decoded.memo.type).not.toBe("id");
+    });
+
+    // A crafted link can hydrate memo as null (lodash merge overrides the
+    // default {} with null). The build page must not crash — the form treats
+    // it as no memo and the built XDR encodes memo "none".
+    const NULL_MEMO_QUERYSTRING =
+      "$=transaction$build$classic$operations@$operation_type=account_merge&source_account=&params$destination=GC3N3GAECL3PJOWIKAAKPOB677WHCUNWZRULANQMHEIL4WDX5FICMF3I;;;;&params$source_account=GAGSY6UVUIINHRHSSDO7NMCM7ADWUF5UJ4ZGGJSFSXKWNJDRW6AA4H3Q&fee=100&seq_num=4466559829409793&cond$time$min_time=&max_time=;;&memo:null;&isValid$params:true&operations:true;;";
+
+    test("builds with no memo when memo hydrates as null", async ({ page }) => {
+      await page.goto(`${baseURL}/transaction/build?${NULL_MEMO_QUERYSTRING}`);
+
+      const txnSuccess = page.getByTestId("build-transaction-envelope-xdr");
+      await expect(txnSuccess).toBeVisible();
+      const xdr = await txnSuccess
+        .getByText("XDR")
+        .locator("+ div")
+        .textContent();
+
+      const decoded = TransactionBuilder.fromXdr(
+        xdr ?? "",
+        Networks.TESTNET,
+      ) as any;
+      expect(decoded.memo.type).toBe("none");
     });
   });
 });

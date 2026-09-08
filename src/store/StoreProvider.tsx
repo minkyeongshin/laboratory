@@ -1,7 +1,8 @@
 "use client";
-import { createContext, ReactNode, useState, useEffect } from "react";
+import { createContext, ReactNode, useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { createStore } from "@/store/createStore";
+import { useBuildFlowStore } from "@/store/createTransactionFlowStore";
 
 import { logMockModeStatus } from "@/mocks";
 
@@ -13,11 +14,17 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
   const searchParams = useSearchParams();
   const url = `${pathname}?${searchParams}`;
 
-  const [store] = useState(() =>
-    createStore({
-      url,
-    }),
-  );
+  const [store] = useState(() => createStore({ url }));
+
+  useEffect(() => {
+    const unsubscribe = store.subscribe((state, prevState) => {
+      if (prevState.network.id && state.network.id !== prevState.network.id) {
+        useBuildFlowStore.getState().resetAll();
+      }
+    });
+
+    return unsubscribe;
+  }, [store]);
 
   // Log mock mode status on initial mount
   useEffect(() => {

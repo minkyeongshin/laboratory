@@ -5,11 +5,10 @@ import { useRouter } from "next/navigation";
 import {
   Button,
   Card,
-  Notification,
   Link,
   Icon,
   Text,
-  Alert,
+  Notification,
   Loader,
 } from "@stellar/design-system";
 import { Address, contract, Operation } from "@stellar/stellar-sdk";
@@ -20,6 +19,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { Box } from "@/components/layout/Box";
 import { PageCard } from "@/components/layout/PageCard";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { FilePicker } from "@/components/FilePicker";
 import { JsonSchemaRenderer } from "@/components/SmartContractJsonSchema/JsonSchemaRenderer";
 import { SourceAccountPicker } from "@/components/SourceAccountPicker";
@@ -49,6 +49,11 @@ import { stellarExpertContractLink } from "@/helpers/stellarExpertContractLink";
 import { isEmptyObject } from "@/helpers/isEmptyObject";
 
 import { NetworkType } from "@/types/types";
+
+// Time bound (in seconds) for the upload/deploy transactions. Generous enough
+// to cover the manual build -> sign -> submit steps (including hardware
+// wallets) so the transaction doesn't expire (txTooLate) before submission.
+const DEPLOY_TX_TIMEOUT_SECONDS = 300;
 
 export default function DeployContract() {
   const CONSTRUCTOR_KEY = "__constructor";
@@ -107,7 +112,7 @@ export default function DeployContract() {
   );
 
   const getConstructorSchema = useCallback(
-    async (wasmFile?: File, wasmBuffer?: Buffer<ArrayBufferLike>) => {
+    async (wasmFile?: File, wasmBuffer?: Uint8Array) => {
       try {
         let wasmBinary = wasmBuffer;
 
@@ -119,7 +124,9 @@ export default function DeployContract() {
           return null;
         }
 
-        const parsedData = parseContractMetadata(wasmBinary);
+        // The parser reads the Wasm with Buffer-only methods (readUint8), so
+        // a Uint8Array (what RPC returns as of SDK v17) has to be wrapped.
+        const parsedData = parseContractMetadata(Buffer.from(wasmBinary));
 
         setParsedContractData(parsedData);
 
@@ -149,9 +156,11 @@ export default function DeployContract() {
   );
 
   const getWasmHashBytes = () => {
+    const returnValue = submitUploadTxResponse?.result?.returnValue;
+
     // For newly uploaded contracts
-    if (submitUploadTxResponse?.result?.returnValue?.bytes()) {
-      return submitUploadTxResponse.result.returnValue.bytes();
+    if (returnValue?.type === "scvBytes") {
+      return returnValue.bytes.toBytes();
     }
 
     // For already uploaded contracts
@@ -200,6 +209,7 @@ export default function DeployContract() {
     rpcUrl: network.rpcUrl,
     headers: getNetworkHeaders(network, "rpc"),
     operation: uploadOp,
+    timeoutInSeconds: DEPLOY_TX_TIMEOUT_SECONDS,
   });
 
   const {
@@ -223,6 +233,7 @@ export default function DeployContract() {
     rpcUrl: network.rpcUrl,
     headers: getNetworkHeaders(network, "rpc"),
     operation: deployOp,
+    timeoutInSeconds: DEPLOY_TX_TIMEOUT_SECONDS,
   });
 
   const {
@@ -262,9 +273,10 @@ export default function DeployContract() {
     setSignDeploySuccess(null);
     setIsDeployExpanded(false);
 
-    queryClient.resetQueries({
-      queryKey: ["buildRpcTransaction", "useWasmBinaryFromRpc"],
-    });
+    // Reset each query family separately. resetQueries matches by key prefix,
+    // so a single composite key would match neither family.
+    queryClient.resetQueries({ queryKey: ["buildRpcTransaction"] });
+    queryClient.resetQueries({ queryKey: ["useWasmBinaryFromRpc"] });
 
     resetSubmitUploadTx();
     resetSubmitDeployTx();
@@ -465,7 +477,7 @@ export default function DeployContract() {
 
   const getContractId = () => {
     try {
-      const xdr = submitDeployTxResponse?.result?.envelopeXdr?.toXDR("base64");
+      const xdr = submitDeployTxResponse?.result?.envelopeXdr?.toXdr("base64");
 
       if (isXdrInit && xdr) {
         const decodedString = StellarXdr.decode("TransactionEnvelope", xdr);
@@ -532,11 +544,11 @@ export default function DeployContract() {
   };
 
   const renderDetailsItemWasmHash = () => {
+    const returnValue = submitUploadTxResponse?.result?.returnValue;
+
     // Wasm hash from the Upload transaction response (for new contracts)
-    if (submitUploadTxResponse?.result?.returnValue?.bytes()) {
-      return Buffer.from(
-        submitUploadTxResponse.result.returnValue.bytes(),
-      ).toString("hex");
+    if (returnValue?.type === "scvBytes") {
+      return Buffer.from(returnValue.bytes.toBytes()).toString("hex");
     }
 
     // Wasm hash from RPC for already uploaded contracts
@@ -760,21 +772,19 @@ export default function DeployContract() {
                   ) : null}
 
                   {hasConstructorArgs ? (
-                    <Alert
+                    <Notification
                       title="This contract has a constructor."
                       variant="primary"
-                      placement="inline"
                     >
                       Please add the arguments for the constructor.
-                    </Alert>
+                    </Notification>
                   ) : (
-                    <Alert
+                    <Notification
                       title="This contract has no constructor."
                       variant="primary"
-                      placement="inline"
                     >
                       There are no arguments to add for the constructor.
-                    </Alert>
+                    </Notification>
                   )}
 
                   {hasConstructorArgs ? (
@@ -977,7 +987,7 @@ export default function DeployContract() {
 
   return (
     <Box gap="lg">
-      <PageCard
+      <PageHeader
         heading="Upload and deploy contract"
         rightElement={
           <Button
@@ -996,9 +1006,8 @@ export default function DeployContract() {
             Clear
           </Button>
         }
-      >
-        {renderContent()}
-      </PageCard>
+      />
+      <PageCard>{renderContent()}</PageCard>
     </Box>
   );
 }

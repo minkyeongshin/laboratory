@@ -1,0 +1,31 @@
+@use "../../styles/utils.scss" as *;
+
+.TransactionFlowFooter {
+  display: flex;
+  align-items: center;
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  min-height: pxToRem(80px);
+  background: var(--sds-clr-gray-02);
+  border-top: 1px solid var(--sds-clr-gray-06);
+  z-index: 4;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: pxToRem(32px);
+    background: inherit;
+  }
+
+  [data-position="left"] {
+    margin-right: auto;
+  }
+
+  [data-position="right"] {
+    margin-left: auto;
+  }
+}

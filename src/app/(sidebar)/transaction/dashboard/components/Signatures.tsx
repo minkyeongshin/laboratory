@@ -51,9 +51,12 @@ export const Signatures = ({
     );
 
   const feeBumpInnerTxHash = feeBumpInnerTxXdr
-    ? TransactionBuilder.fromXDR(feeBumpInnerTxXdr, network.passphrase)
-        .hash()
-        .toString("hex")
+    ? Buffer.from(
+        TransactionBuilder.fromXdr(
+          feeBumpInnerTxXdr,
+          network.passphrase,
+        ).hash(),
+      ).toString("hex")
     : undefined;
 
   const possibleSigners = getPossibleSigners(
@@ -80,7 +83,7 @@ export const Signatures = ({
         );
 
         return (
-          <tr role="row" key={rowKey}>
+          <tr key={rowKey}>
             <td>
               <SignatureCell>
                 {signerPubKey ? renderSigner(isVerified, signerPubKey) : "-"}
@@ -106,7 +109,7 @@ export const Signatures = ({
       const isMatch = verifyAuthEntryPublicKey(entry.publicKey, entry.address);
 
       return (
-        <tr role="row" key={rowKey}>
+        <tr key={rowKey}>
           <td>
             <SignatureCell>
               {renderSigner(isMatch, entry.address)}
@@ -142,11 +145,6 @@ export const Signatures = ({
     <Box gap="lg" addlClassName="Signatures">
       {signatures && signatures.length > 0 && txHash && (
         <>
-          <Text as="div" size="xs" weight="regular">
-            Cryptographic signatures that authorize this transaction. Each
-            signature includes the signer&apos;s public key, signature value,
-            and hint.
-          </Text>
           <div className="Signatures__gridTableContainer">
             <table>
               <thead>
@@ -172,9 +170,6 @@ export const Signatures = ({
 
       {authEntries.length > 0 && (
         <>
-          <Text as="div" size="xs" weight="regular">
-            Soroban authorization entry signatures.
-          </Text>
           <div className="Signatures__gridTableContainer">
             <table>
               <thead>
@@ -280,7 +275,13 @@ const getAuthEntries = (operations: any[] | undefined): AuthEntryInfo[] => {
 };
 
 const parseAuthEntry = (authEntry: any): AuthEntryInfo | null => {
-  const creds = authEntry?.credentials?.address;
+  // Address credentials may be legacy (`address`) or CAP-71 V2 (`address_v2`);
+  // both carry the same SorobanAddressCredentials shape. Delegates entries
+  // (`address_with_delegates`) need recursive parsing of the delegate tree —
+  // a top-level signature can be Void with the real signatures under
+  // `delegates[*].signature` — and are handled as part of #2103, not here.
+  const creds =
+    authEntry?.credentials?.address ?? authEntry?.credentials?.address_v2;
   const sigMap = creds?.signature?.vec?.[0]?.map;
 
   if (!Array.isArray(sigMap)) {

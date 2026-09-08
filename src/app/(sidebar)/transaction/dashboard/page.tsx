@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  Alert,
+  Notification,
   Button,
   Card,
   Icon,
@@ -14,6 +14,7 @@ import {
 } from "@stellar/design-system";
 
 import { PageCard } from "@/components/layout/PageCard";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Box } from "@/components/layout/Box";
 import { MessageField } from "@/components/MessageField";
 import { SwitchNetworkButtons } from "@/components/SwitchNetworkButtons";
@@ -129,12 +130,31 @@ export default function TransactionDashboard() {
   ];
 
   useEffect(() => {
+    const transactionHashError =
+      validate.getTransactionHashError(transactionHashInput);
+
+    if (
+      transactionHashInput &&
+      !transactionHashError &&
+      isCurrentNetworkSupported &&
+      network.rpcUrl
+    ) {
+      fetchTxDetails();
+      trackEvent(TrackingEvent.TRANSACTION_DASHBOARD_LOAD_TX_AUTO, {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    transactionHashInput,
+    isCurrentNetworkSupported,
+    network.rpcUrl,
+    fetchTxDetails,
+  ]);
+
+  useEffect(() => {
     if (txDashboard.transactionHash) {
       setTransactionHashInput(txDashboard.transactionHash);
     }
-    // Run this only when page loads
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [txDashboard.transactionHash]);
 
   useEffect(() => {
     if (isLatestTxnSuccess && latestTxn?.hash) {
@@ -230,12 +250,13 @@ export default function TransactionDashboard() {
 
   return (
     <Box gap="lg">
-      <PageCard heading="Transaction dashboard">
+      <PageHeader heading="Transaction dashboard" />
+      <PageCard>
         {!network.rpcUrl ? (
-          <Alert variant="warning" placement="inline" title="Attention">
+          <Notification variant="warning" title="Attention">
             RPC URL is required to view transaction information. You can add it
             in the network settings in the upper right corner.
-          </Alert>
+          </Notification>
         ) : null}
 
         <form
@@ -296,9 +317,8 @@ export default function TransactionDashboard() {
       </PageCard>
 
       {isTxNotFound ? (
-        <Alert
+        <Notification
           variant="warning"
-          placement="inline"
           title="This transaction can’t be found here."
         >
           <Box gap="md">
@@ -316,7 +336,7 @@ export default function TransactionDashboard() {
               {renderExternalButtons()}
             </Box>
           </Box>
-        </Alert>
+        </Notification>
       ) : null}
 
       <TransactionInfo

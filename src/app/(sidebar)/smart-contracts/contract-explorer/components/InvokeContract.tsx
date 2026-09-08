@@ -1,10 +1,19 @@
-import { Alert, Card, Loader, Text } from "@stellar/design-system";
+"use client";
+
+import { useState } from "react";
+import {
+  Notification,
+  Card,
+  Loader,
+  RadioButton,
+  Text,
+} from "@stellar/design-system";
 import { contract } from "@stellar/stellar-sdk";
 import { useStore } from "@/store/useStore";
 
 import { Box } from "@/components/layout/Box";
 
-import { InvokeContractForm } from "./InvokeContractForm";
+import { InvokeContractForm, SigningMethod } from "./InvokeContractForm";
 
 export const InvokeContract = ({
   isLoading,
@@ -18,14 +27,15 @@ export const InvokeContract = ({
   contractClientError: Error | null | undefined;
 }) => {
   const { walletKit } = useStore();
+  const [signingMethod, setSigningMethod] = useState<SigningMethod>("wallet");
 
   const renderFunctionCard = () => {
     const invokeContractSpecFuncs = contractSpec?.funcs();
 
     return invokeContractSpecFuncs
-      ?.filter((func) => !func.name().toString().includes("__"))
+      ?.filter((func) => !func.name.toString().includes("__"))
       ?.map((func) => {
-        const funcName = func.name().toString();
+        const funcName = func.name.toString();
 
         return (
           <InvokeContractForm
@@ -33,6 +43,7 @@ export const InvokeContract = ({
             key={funcName}
             contractId={contractId}
             funcName={funcName}
+            signingMethod={signingMethod}
           />
         );
       });
@@ -41,15 +52,15 @@ export const InvokeContract = ({
   const renderError = () => {
     if (contractClientError?.message) {
       return (
-        <Alert variant="error" placement="inline" title="Error">
+        <Notification variant="error" title="Error">
           {contractClientError?.message}
-        </Alert>
+        </Notification>
       );
     }
     return (
-      <Alert variant="error" placement="inline" title="Error">
+      <Notification variant="error" title="Error">
         An unexpected error occurred while fetching the contract specification.
-      </Alert>
+      </Notification>
     );
   };
 
@@ -63,12 +74,38 @@ export const InvokeContract = ({
 
   return (
     <Box gap="md" addlClassName="InvokeContractForm">
-      {!walletKit?.publicKey ? (
-        <Alert variant="warning" placement="inline" title="Connect wallet">
+      <Box gap="md" direction="row" justify="end">
+        <RadioButton
+          id="invoke-contract-signing-wallet"
+          label="Use connected wallet"
+          fieldSize="md"
+          name="invoke-contract-signing-method"
+          value="wallet"
+          checked={signingMethod === "wallet"}
+          onChange={() => {
+            setSigningMethod("wallet");
+          }}
+        />
+        <RadioButton
+          id="invoke-contract-signing-another"
+          label="Use another signing method"
+          fieldSize="md"
+          name="invoke-contract-signing-method"
+          value="another"
+          checked={signingMethod === "another"}
+          onChange={() => {
+            setSigningMethod("another");
+          }}
+        />
+      </Box>
+
+      {!walletKit?.publicKey && signingMethod === "wallet" ? (
+        <Notification variant="warning" title="Connect wallet">
           A connected wallet is required to invoke this contract. Please connect
           your wallet to proceed.
-        </Alert>
+        </Notification>
       ) : null}
+
       <Card>
         <Box gap="lg" data-testid="invoke-contract-container">
           <Text as="h2" size="md" weight="semi-bold">

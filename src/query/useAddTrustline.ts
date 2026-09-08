@@ -24,7 +24,15 @@ export const useAddTrustline = ({
   headers: NetworkHeaders;
 }) => {
   const query = useQuery({
-    queryKey: ["addTrustline", publicKey],
+    queryKey: [
+      "addTrustline",
+      publicKey,
+      asset.assetCode,
+      asset.assetIssuer,
+      network.horizonUrl,
+      network.passphrase,
+      headers,
+    ],
     queryFn: async () => {
       if (!asset.assetCode || !asset.assetIssuer) {
         throw new Error("Asset code and issuer are required");
@@ -50,7 +58,7 @@ export const useAddTrustline = ({
         .setTimeout(60)
         .build();
 
-      return transaction.toEnvelope().toXDR("base64");
+      return transaction.toEnvelope().toXdr("base64");
     },
     enabled: false,
   });

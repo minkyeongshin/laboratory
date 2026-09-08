@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {
-  Alert,
+  Notification,
   Avatar,
   Card,
   Icon,
@@ -18,7 +18,10 @@ import { SdsLink } from "@/components/SdsLink";
 import { TabView } from "@/components/TabView";
 import { InfoFieldItem } from "@/components/InfoFieldItem";
 import { NoInfoLoadedView } from "@/components/NoInfoLoadedView";
-import { BuildVerifiedBadge } from "@/components/BuildVerifiedBadge";
+import {
+  BuildVerifiedBadge,
+  VerifiedBuildMessage,
+} from "@/components/BuildVerifiedBadge";
 
 import { formatEpochToDate } from "@/helpers/formatEpochToDate";
 import { formatNumber } from "@/helpers/formatNumber";
@@ -52,7 +55,7 @@ export const ContractInfo = ({
   isLoading,
   isSacType,
 }: {
-  infoData: ContractInfoApiResponse | undefined;
+  infoData: ContractInfoApiResponse | null | undefined;
   contractId: string;
   backendStatus: "healthy" | "unhealthy";
   wasmData: WasmData | null | undefined;
@@ -304,11 +307,13 @@ export const ContractInfo = ({
     children: React.ReactNode;
   }) => {
     return (
-      <Alert variant="primary" placement="inline" title={title}>
+      <Notification variant="primary" title={title}>
         {children}
-      </Alert>
+      </Notification>
     );
   };
+
+  const isSourceFromAttestation = !isSacType && wasmData && sourceRepo;
 
   return (
     <Box gap="lg">
@@ -336,11 +341,38 @@ export const ContractInfo = ({
             {infoData ? (
               <BuildVerifiedBadge
                 status={
-                  isSacType ? "built_in" : wasmData ? "verified" : "unverified"
+                  isSacType
+                    ? "built_in"
+                    : wasmData
+                      ? "verified_build"
+                      : "unverified_build"
                 }
               />
             ) : null}
+
+            {!isSacType && sourceRepo && (
+              <BuildVerifiedBadge status="source_code_unverified" />
+            )}
           </Box>
+
+          {!isSacType && wasmData && (
+            <Notification variant="primary" title="Verified Build">
+              <VerifiedBuildMessage />
+            </Notification>
+          )}
+
+          {activeTab === "contract-source-code" && isSourceFromAttestation ? (
+            <Notification variant="warning" title="About this source code">
+              This source code comes from the GitHub repo at the specific commit
+              referenced in the contract’s build attestation — a point-in-time
+              snapshot of what the GitHub Actions runner claims it compiled to
+              produce the Wasm. It does not prove that rebuilding this source
+              produces the same Wasm.{" "}
+              <Link href="https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0055.md">
+                Learn more about SEP-55 Contract Build Verification
+              </Link>
+            </Notification>
+          ) : null}
 
           <TabView
             tab1={{

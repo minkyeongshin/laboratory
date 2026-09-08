@@ -7,21 +7,39 @@ import {
 
 import { NetworkHeaders } from "@/types/types";
 
+// Default time (in seconds) the built transaction stays valid before its time
+// bounds expire.
+const DEFAULT_TX_TIMEOUT_SECONDS = 30;
+
 export const useBuildRpcTransaction = ({
   publicKey,
   rpcUrl,
   headers,
   networkPassphrase,
   operation,
+  timeoutInSeconds = DEFAULT_TX_TIMEOUT_SECONDS,
 }: {
   publicKey: string | undefined;
   rpcUrl: string;
   headers: NetworkHeaders;
   networkPassphrase: string;
   operation: any;
+  // How long the built transaction stays valid before its time bounds expire.
+  // Must be generous enough to cover the manual sign + submit steps (including
+  // hardware wallets); otherwise the user gets a txTooLate error on submit.
+  timeoutInSeconds?: number;
 }) => {
   const query = useQuery({
-    queryKey: ["buildRpcTransaction", publicKey, operation],
+    queryKey: [
+      "buildRpcTransaction",
+      publicKey,
+      rpcUrl,
+      operation,
+      networkPassphrase,
+      timeoutInSeconds,
+      headers,
+      rpcUrl,
+    ],
     queryFn: async () => {
       if (!publicKey) {
         throw "Public key is required.";
@@ -44,14 +62,15 @@ export const useBuildRpcTransaction = ({
           networkPassphrase,
         })
           .addOperation(operation)
-          .setTimeout(30)
+          .setTimeout(timeoutInSeconds)
           .build();
 
+        // TODO: handle CAP-71 v2 auth flag
         const preparedTxn = await rpcServer.prepareTransaction(transaction);
 
         return {
           preparedTxn,
-          preparedXdr: preparedTxn.toEnvelope().toXDR("base64"),
+          preparedXdr: preparedTxn.toEnvelope().toXdr("base64"),
         };
       } catch (error) {
         throw `Error building RPC transaction: ${error}.`;

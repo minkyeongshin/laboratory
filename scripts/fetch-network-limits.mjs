@@ -149,10 +149,12 @@ const getNetworkLimitsFromResponse = (response) => {
   const ledgerCostExtEntry = findEntry("contract_ledger_cost_ext_v0");
   const eventsEntry = findEntry("contract_events_v0");
   const dataKeySizeEntry = findEntry("contract_data_key_size_bytes");
+  const dataEntrySizeEntry = findEntry("contract_data_entry_size_bytes");
   const maxSizeEntry = findEntry("contract_max_size_bytes");
   const stateArchivalEntry = findEntry("state_archival");
   const bandwidthEntry = findEntry("contract_bandwidth_v0");
   const historicalDataEntry = findEntry("contract_historical_data_v0");
+  const parallelComputeEntry = findEntry("contract_parallel_compute_v0");
   const liveSorobanStateSizeWindowEntry = findEntry(
     "live_soroban_state_size_window",
   );
@@ -186,6 +188,9 @@ const getNetworkLimitsFromResponse = (response) => {
         ?.tx_max_contract_events_size_bytes,
     contract_data_key_size_bytes:
       dataKeySizeEntry?.dataJson?.config_setting?.contract_data_key_size_bytes,
+    contract_data_entry_size_bytes:
+      dataEntrySizeEntry?.dataJson?.config_setting
+        ?.contract_data_entry_size_bytes,
     contract_max_size_bytes:
       maxSizeEntry?.dataJson?.config_setting?.contract_max_size_bytes,
 
@@ -209,6 +214,9 @@ const getNetworkLimitsFromResponse = (response) => {
     ledger_max_txs_size_bytes:
       bandwidthEntry?.dataJson?.config_setting?.contract_bandwidth_v0
         ?.ledger_max_txs_size_bytes,
+    ledger_max_dependent_tx_clusters:
+      parallelComputeEntry?.dataJson?.config_setting
+        ?.contract_parallel_compute_v0?.ledger_max_dependent_tx_clusters,
 
     // State archival TTL extension parameters
     max_entry_ttl:
@@ -288,6 +296,7 @@ export interface NetworkLimits {
   tx_max_write_bytes: number;
   tx_max_contract_events_size_bytes: number;
   contract_data_key_size_bytes: number;
+  contract_data_entry_size_bytes: number;
   contract_max_size_bytes: number;
 
   // Ledger-wide limits
@@ -297,6 +306,7 @@ export interface NetworkLimits {
   ledger_max_write_ledger_entries: number;
   ledger_max_write_bytes: number;
   ledger_max_txs_size_bytes: number;
+  ledger_max_dependent_tx_clusters: number;
 
   // State archival TTL extension parameters
   max_entry_ttl: number;

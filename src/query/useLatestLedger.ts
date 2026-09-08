@@ -14,7 +14,7 @@ export const useLatestLedger = ({
   headers: NetworkHeaders;
 }) => {
   const query = useQuery({
-    queryKey: ["latestLedger"],
+    queryKey: ["latestLedger", rpcUrl, headers],
     queryFn: async () => {
       if (IS_MOCK_MODE) {
         return getMockLatestLedger();

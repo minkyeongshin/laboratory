@@ -1,18 +1,20 @@
 "use client";
 
-import { Alert, Icon, Text, Tooltip } from "@stellar/design-system";
+import { Notification, Icon, Text, Tooltip } from "@stellar/design-system";
 import { useContext, useState } from "react";
 
 import { useStore } from "@/store/useStore";
 import { WindowContext } from "@/components/layout/LayoutContextProvider";
 
 import { PageCard } from "@/components/layout/PageCard";
+import { PageHeader } from "@/components/layout/PageHeader";
 import { Box } from "@/components/layout/Box";
 import { SdsLink } from "@/components/SdsLink";
 import { LabelHeading } from "@/components/LabelHeading";
 import { SwitchNetworkButtons } from "@/components/SwitchNetworkButtons";
 import { Tabs } from "@/components/Tabs";
 import { CodeEditor } from "@/components/CodeEditor";
+import { GridTable, GridTableRow, GridTableCell } from "@/components/GridTable";
 
 import {
   formatLedgersToDays,
@@ -46,14 +48,25 @@ export default function NetworkLimits() {
   const limitsJsonString = JSON.stringify(limitsJson, null, 2);
 
   return (
-    <div className="NetworkLimits">
-      <PageCard heading="Network limits">
-        {network.id === "custom" ? (
-          <Alert
-            placement="inline"
-            variant="warning"
-            title="Network limits unavailable"
+    <Box addlClassName="NetworkLimits" gap="lg">
+      <PageHeader heading="Network limits" />
+
+      <Box gap="sm">
+        <Text as="p" size="sm" weight="regular">
+          Resource limitations and fees only apply to smart contract
+          transactions. Read more about the inner workings of fees on Stellar in{" "}
+          <SdsLink
+            href="https://developers.stellar.org/docs/learn/fundamentals/fees-resource-limits-metering"
+            addlClassName="Link--external"
           >
+            the Fees section
+            <Icon.LinkExternal01 />
+          </SdsLink>
+        </Text>
+      </Box>
+      <PageCard>
+        {network.id === "custom" ? (
+          <Notification variant="warning" title="Network limits unavailable">
             <Box gap="md">
               Network limit data is not available for the selected custom
               network.
@@ -65,24 +78,9 @@ export default function NetworkLimits() {
                 />
               </Box>
             </Box>
-          </Alert>
+          </Notification>
         ) : (
           <>
-            <Box gap="sm">
-              <Text as="p" size="sm" weight="regular">
-                Resource limitations and fees only apply to smart contract
-                transactions. Read more about the inner workings of fees on
-                Stellar in{" "}
-                <SdsLink
-                  href="https://developers.stellar.org/docs/learn/fundamentals/fees-resource-limits-metering"
-                  addlClassName="Link--external"
-                >
-                  the Fees section
-                  <Icon.LinkExternal01 />
-                </SdsLink>
-              </Text>
-            </Box>
-
             <Tabs
               tabs={VIEW_TABS}
               activeTabId={activeTab}
@@ -118,7 +116,7 @@ export default function NetworkLimits() {
           </>
         )}
       </PageCard>
-    </div>
+    </Box>
   );
 }
 
@@ -169,6 +167,12 @@ const ResourceLimitsSection = ({
       ledgerWide: "no explicit limit",
     },
     {
+      setting: "Max dependent transaction clusters",
+      setting_note: "parallel execution",
+      perTransaction: undefined,
+      ledgerWide: limits.ledger_max_dependent_tx_clusters.toString(),
+    },
+    {
       setting: "Individual ledger key size",
       setting_note: "contract storage key",
       perTransaction: `${limits.contract_data_key_size_bytes} bytes`,
@@ -176,7 +180,16 @@ const ResourceLimitsSection = ({
     },
     {
       setting: "Individual ledger entry size",
-      setting_note: "including Wasm entries",
+      setting_note: "contract data entry",
+      perTransaction: formatBytes(
+        limits.contract_data_entry_size_bytes,
+        "binary",
+      ),
+      ledgerWide: undefined,
+    },
+    {
+      setting: "Contract code (Wasm) size",
+      setting_note: "contract code entry",
       perTransaction: formatBytes(limits.contract_max_size_bytes, "binary"),
       ledgerWide: undefined,
     },
@@ -226,16 +239,17 @@ const ResourceLimitsSection = ({
                   ) : null}
                 </GridTableCell>
                 <GridTableCell
+                  isEmpty={!item.perTransaction}
                   addlClassName={
-                    item.setting_note ? "NetworkLimits__table__cell--note" : ""
+                    item.setting_note ? "GridTable__cell--note" : ""
                   }
                 >
-                  {item.perTransaction}
+                  {item.perTransaction ?? null}
                 </GridTableCell>
                 <GridTableCell
                   isEmpty={!item.ledgerWide}
                   addlClassName={
-                    item.setting_note ? "NetworkLimits__table__cell--note" : ""
+                    item.setting_note ? "GridTable__cell--note" : ""
                   }
                 >
                   {item.ledgerWide ?? null}
@@ -265,7 +279,7 @@ const ResourceLimitsSection = ({
             </GridTableRow>
 
             {resourceLimits.map((item, index) => (
-              <GridTableRow key={`per-${index}`}>
+              <GridTableRow key={`per-${index}`} isEmpty={!item.perTransaction}>
                 <GridTableCell isRowHeader>
                   {item.setting}
                   {item.setting_note ? (
@@ -277,10 +291,10 @@ const ResourceLimitsSection = ({
 
                 <GridTableCell
                   addlClassName={
-                    item.setting_note ? "NetworkLimits__table__cell--note" : ""
+                    item.setting_note ? "GridTable__cell--note" : ""
                   }
                 >
-                  {item.perTransaction}
+                  {item.perTransaction ?? null}
                 </GridTableCell>
               </GridTableRow>
             ))}
@@ -500,7 +514,7 @@ const ResourceFeesSection = ({
                 <GridTableCell
                   addlClassName={
                     item.note || item.setting_note
-                      ? "NetworkLimits__table__cell--note"
+                      ? "GridTable__cell--note"
                       : ""
                   }
                 >
@@ -523,62 +537,6 @@ const ResourceFeesSection = ({
         </GridTable>
       </div>
     </Box>
-  );
-};
-
-// // =============================================================================
-// // Components
-// // =============================================================================
-const GridTable = ({ children }: { children: React.ReactNode }) => (
-  <div className="NetworkLimits__table" role="table">
-    {children}
-  </div>
-);
-
-const GridTableRow = ({
-  children,
-  isEmpty,
-}: {
-  children: React.ReactNode;
-  isEmpty?: boolean;
-}) => (
-  <div
-    className={`NetworkLimits__table__row ${isEmpty ? "is--empty " : ""}`}
-    role="row"
-  >
-    {children}
-  </div>
-);
-
-const GridTableCell = ({
-  children,
-  isEmpty,
-  isHeader,
-  isRowHeader,
-  addlClassName,
-}: {
-  children: React.ReactNode | React.ReactNode[] | null;
-  isEmpty?: boolean;
-  isHeader?: boolean;
-  isRowHeader?: boolean;
-  addlClassName?: string;
-}) => {
-  let role: "cell" | "columnheader" | "rowheader" = "cell";
-
-  if (isHeader) {
-    role = "columnheader";
-  }
-
-  if (isRowHeader) {
-    role = "rowheader";
-  }
-  return (
-    <div
-      className={`NetworkLimits__table__cell ${isEmpty ? "is--empty " : ""} ${addlClassName || ""}`}
-      role={role}
-    >
-      {children}
-    </div>
   );
 };
 

@@ -1,7 +1,6 @@
 import { baseURL } from "../../playwright.config";
 import { test, expect, type Page } from "@playwright/test";
 
-
 import {
   formatLedgersToDays,
   formatLedgersToMonths,
@@ -14,9 +13,7 @@ import { MAINNET_LIMITS } from "@/constants/networkLimits";
 
 test.describe("Network Limits page on Mainnet", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(
-      `${baseURL}/network-limits?$=network$id=mainnet`,
-    );
+    await page.goto(`${baseURL}/network-limits?$=network$id=mainnet`);
   });
 
   test("Loads the page", async ({ page }) => {
@@ -38,8 +35,8 @@ test.describe("Network Limits page on Mainnet", () => {
     page,
   }) => {
     const resourceLimitsHeading = page.locator("text=Resource limits");
-    const table = page.locator(".NetworkLimits__table");
-    const rows = table.locator(".NetworkLimits__table__row");
+    const table = page.locator(".GridTable");
+    const rows = table.locator(".GridTable__row");
 
     await expect(resourceLimitsHeading).toBeVisible();
 
@@ -87,13 +84,25 @@ test.describe("Network Limits page on Mainnet", () => {
     ]);
 
     await expect(getTableRow(rows, 8)).toHaveText([
+      "Max dependent transaction clustersparallel execution",
+      "",
+      `${MAINNET_LIMITS.ledger_max_dependent_tx_clusters}`,
+    ]);
+
+    await expect(getTableRow(rows, 9)).toHaveText([
       "Individual ledger key sizecontract storage key",
       `${MAINNET_LIMITS.contract_data_key_size_bytes} bytes`,
       "",
     ]);
 
-    await expect(getTableRow(rows, 9)).toHaveText([
-      "Individual ledger entry sizeincluding Wasm entries",
+    await expect(getTableRow(rows, 10)).toHaveText([
+      "Individual ledger entry sizecontract data entry",
+      `${formatFileSize(MAINNET_LIMITS.contract_data_entry_size_bytes, "binary")}`,
+      "",
+    ]);
+
+    await expect(getTableRow(rows, 11)).toHaveText([
+      "Contract code (Wasm) sizecontract code entry",
       `${formatFileSize(MAINNET_LIMITS.contract_max_size_bytes, "binary")}`,
       "",
     ]);
@@ -105,9 +114,9 @@ test.describe("Network Limits page on Mainnet", () => {
     const stateArchivalHeading = page.locator("text=TTL extension parameter");
     await expect(stateArchivalHeading).toBeVisible();
 
-    const tables = page.locator(".NetworkLimits__table");
+    const tables = page.locator(".GridTable");
     const stateArchivalTable = tables.nth(1);
-    const rows = stateArchivalTable.locator(".NetworkLimits__table__row");
+    const rows = stateArchivalTable.locator(".GridTable__row");
 
     await expect(getTableRow(rows, 1)).toHaveText([
       "Persistent entry TTL on creation",
@@ -131,9 +140,9 @@ test.describe("Network Limits page on Mainnet", () => {
     const resourceFeesHeading = page.locator("text=Resource fees");
     await expect(resourceFeesHeading).toBeVisible();
 
-    const tables = page.locator(".NetworkLimits__table");
+    const tables = page.locator(".GridTable");
     const feesTable = tables.nth(2);
-    const rows = feesTable.locator(".NetworkLimits__table__row");
+    const rows = feesTable.locator(".GridTable__row");
 
     const BYTES_PER_KB = 1024;
 
@@ -315,7 +324,7 @@ test.describe("Network Limits page on Mainnet", () => {
 // Helpers
 // =============================================================================
 const getTableRow = (rows: any, index: number) => {
-  return rows.nth(index).locator(".NetworkLimits__table__cell");
+  return rows.nth(index).locator(".GridTable__cell");
 };
 
 /**
@@ -323,15 +332,18 @@ const getTableRow = (rows: any, index: number) => {
  * Waits for the modal's Accept button and clicks it.
  */
 const dismissNetworkSettingsModal = async (page: Page) => {
-  const modal = page.locator(".Modal");
-  const acceptButton = modal.locator("button", { hasText: "Accept" });
+  const modal = page.locator(".Modal").filter({
+    has: page.getByRole("heading", { name: "Review Network Settings" }),
+  });
+
   // Modal may not appear in all environments; wait briefly and no-op if absent.
   try {
-    await acceptButton.waitFor({ state: "visible", timeout: 1000 });
+    await modal.waitFor({ state: "visible", timeout: 5000 });
   } catch {
-    // Accept button never became visible; assume modal is not present.
+    // Modal never became visible; assume it is not present.
     return;
   }
-  await acceptButton.click();
-  await modal.waitFor({ state: "hidden" });
+
+  await modal.getByRole("button", { name: "Accept" }).click();
+  await expect(modal).toBeHidden();
 };

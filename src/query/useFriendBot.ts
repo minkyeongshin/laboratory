@@ -23,7 +23,14 @@ export const useFriendBot = ({
       : "https://friendbot.stellar.org";
 
   const query = useQuery({
-    queryKey: ["friendBot", publicKey, key],
+    queryKey: [
+      "friendBot",
+      publicKey,
+      key,
+      network,
+      knownFriendbotURL,
+      headers,
+    ],
     queryFn: async () => {
       if (IS_MOCK_MODE) {
         return getMockFriendbotResponse();

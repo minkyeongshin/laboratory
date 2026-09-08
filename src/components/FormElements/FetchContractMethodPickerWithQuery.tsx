@@ -9,6 +9,7 @@ import { Box } from "@/components/layout/Box";
 import { ContractMethodSelectPicker } from "@/components/FormElements/ContractMethodSelectPicker";
 import { TextPicker } from "@/components/FormElements/TextPicker";
 import { MessageField } from "@/components/MessageField";
+import { AddressSelector } from "@/components/AddressSelector";
 
 import { useStore } from "@/store/useStore";
 import { validate } from "@/validate";
@@ -46,6 +47,7 @@ export const FetchContractMethodPickerWithQuery = ({
 
   const [contractIdError, setContractIdError] = useState<string>("");
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
 
   const [fetchType, setFetchType] = useState<"sac" | "contract" | null>(null);
 
@@ -107,8 +109,8 @@ export const FetchContractMethodPickerWithQuery = ({
     if ((isSacDataSuccess || isContractClientSuccess) && memoizedMethods) {
       return (
         memoizedMethods
-          ?.filter((func) => !func.name().toString().includes("__"))
-          ?.map((func) => func.name().toString()) || []
+          ?.filter((func) => !func.name.toString().includes("__"))
+          ?.map((func) => func.name.toString()) || []
       );
     }
     return [];
@@ -142,7 +144,24 @@ export const FetchContractMethodPickerWithQuery = ({
     }
   }, [contractClientError, sacDataError]);
 
-  const handleContractIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Auto-fetch contract methods once a valid contract id is filled in.
+  // Debounced so we only fetch after the user stops typing/pasting, and
+  // gated on validation so we never fetch an incomplete/invalid id. This also
+  // covers remounting with a saved contract_id.
+  useEffect(() => {
+    if (!contractIdInput || validate.getContractIdError(contractIdInput)) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      fetchContractData();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contractIdInput]);
+
+  const handleContractIdChange = (contractId: string) => {
     // reset the error
     setFetchError("");
 
@@ -155,10 +174,8 @@ export const FetchContractMethodPickerWithQuery = ({
     queryClient.resetQueries({ queryKey: ["useGitHubFile"] });
 
     // validate the contract id
-    if (e.target.value) {
-      const validatedContractIdError = validate.getContractIdError(
-        e.target.value,
-      );
+    if (contractId) {
+      const validatedContractIdError = validate.getContractIdError(contractId);
       if (validatedContractIdError) {
         setContractIdError(validatedContractIdError);
       } else {
@@ -168,7 +185,7 @@ export const FetchContractMethodPickerWithQuery = ({
 
     // Clear stale method and args from the previous contract
     const newValue: SorobanInvokeValue = {
-      contract_id: e.target.value || "",
+      contract_id: contractId || "",
       function_name: "",
       args: {},
     };
@@ -183,7 +200,7 @@ export const FetchContractMethodPickerWithQuery = ({
   };
 
   return (
-    <Box gap="md">
+    <Box gap="md" addlClassName="FetchContractMethodPicker">
       <TextPicker
         key={id}
         id={id}
@@ -191,8 +208,22 @@ export const FetchContractMethodPickerWithQuery = ({
         placeholder="Ex: CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"
         value={contractIdInput}
         error={error || contractIdError}
-        onChange={handleContractIdChange}
+        onChange={(e) => handleContractIdChange(e.target.value)}
         disabled={disabled}
+        rightElement={
+          !disabled && (
+            <AddressSelector.Button
+              mode="contract"
+              onClick={() => setIsSelectorOpen(!isSelectorOpen)}
+            />
+          )
+        }
+      />
+      <AddressSelector.Dropdown
+        mode="contract"
+        onChange={handleContractIdChange}
+        isOpen={isSelectorOpen}
+        onClose={() => setIsSelectorOpen(false)}
       />
 
       <Box gap="sm">

@@ -22,6 +22,7 @@ import {
 import { BASE_FEE, contract } from "@stellar/stellar-sdk";
 import { Api } from "@stellar/stellar-sdk/rpc";
 import { JSONSchema7 } from "json-schema";
+import { useRouter } from "next/navigation";
 
 import { RpcErrorResponse } from "@/components/TxErrorResponse";
 
@@ -30,12 +31,14 @@ import { ErrorText } from "@/components/ErrorText";
 import { JsonSchemaRenderer } from "@/components/SmartContractJsonSchema/JsonSchemaRenderer";
 import { TransactionSuccessCard } from "@/components/TransactionSuccessCard";
 import { WalletKitContext } from "@/components/WalletKit/WalletKitContextProvider";
-import { TabView } from "@/components/TabView";
+import { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit";
 import { CodeEditor, SupportedLanguage } from "@/components/CodeEditor";
 
 import { TransactionBuildParams } from "@/store/createStore";
 import { useStore } from "@/store/useStore";
+import { useBuildFlowStore } from "@/store/createTransactionFlowStore";
 import { DereferencedSchemaType } from "@/constants/jsonSchema";
+import { Routes } from "@/constants/routes";
 
 import { useAccountSequenceNumber } from "@/query/useAccountSequenceNumber";
 import { useRpcAssembleTx } from "@/query/useRpcAssembleTx";
@@ -61,22 +64,29 @@ type SimulatedResponseType = {
   resultOnly: AnyObject;
 };
 
+export type SigningMethod = "wallet" | "another";
+
 export const InvokeContractForm = ({
   contractId,
   funcName,
   contractSpec,
+  signingMethod = "wallet",
 }: {
   contractId: string;
   funcName: string;
   contractSpec: contract.Spec;
+  signingMethod?: SigningMethod;
 }) => {
   const { network, walletKit } = useStore();
+  const { resetAll, setBuildParams, setBuildSorobanOperation } =
+    useBuildFlowStore();
+  const router = useRouter();
   const [invokeError, setInvokeError] = useState<{
     message: string;
     methodType: string;
   } | null>(null);
   const [isExtensionLoading, setIsExtensionLoading] = useState(false);
-  const [xdrFormat, setXdrFormat] = useState<XdrFormatType | string>("json");
+  const [xdrFormat, setXdrFormat] = useState<XdrFormatType>("json");
   const [formValue, setFormValue] = useState<SorobanInvokeValue>({
     contract_id: contractId,
     function_name: funcName,
@@ -170,7 +180,7 @@ export const InvokeContractForm = ({
   const responseErrorEl = useRef<HTMLDivElement | null>(null);
 
   const signTx = async (xdr: string): Promise<string | null> => {
-    if (!walletKitInstance?.walletKit || !walletKit?.publicKey) {
+    if (!walletKitInstance.isInitialized || !walletKit?.publicKey) {
       return null;
     }
 
@@ -190,13 +200,10 @@ export const InvokeContractForm = ({
           }, 180000);
         });
 
-        const signPromise = walletKitInstance.walletKit.signTransaction(
-          xdr || "",
-          {
-            address: walletKit.publicKey,
-            networkPassphrase: network.passphrase,
-          },
-        );
+        const signPromise = StellarWalletsKit.signTransaction(xdr || "", {
+          address: walletKit.publicKey,
+          networkPassphrase: network.passphrase,
+        });
 
         const result = await Promise.race([signPromise, timeoutPromise]);
 
@@ -307,6 +314,28 @@ export const InvokeContractForm = ({
         await handleSubmit(prepareResult.transactionXdr);
       }
     }
+  };
+
+  const handleRedirectToBuildFlow = () => {
+    resetAll();
+
+    setBuildParams({
+      source_account: "",
+      fee: BASE_FEE,
+      seq_num: "",
+      cond: { time: { min_time: "", max_time: "" } },
+      memo: {},
+    });
+
+    setBuildSorobanOperation({
+      operation_type: "invoke_contract_function",
+      params: {
+        invoke_contract: JSON.stringify(formValue),
+      },
+      source_account: "",
+    });
+
+    router.push(Routes.BUILD_TRANSACTION);
   };
 
   const getXdrToSimulate = async () => {
@@ -606,48 +635,23 @@ export const InvokeContractForm = ({
   const renderResponse = () => {
     if (jsonResponse?.fullResponse || base64Response?.fullResponse) {
       return (
-        <TabView
-          tab1={{
-            id: "json",
-            label: "JSON",
-            content: jsonResponse?.fullResponse && (
-              <SimulatedResponse
-                xdrFormat="json"
-                result={jsonResponse}
-                isFullResponseEnabled={isFullResponseEnabled}
-              />
-            ),
-            isDisabled: !jsonResponse?.fullResponse,
-          }}
-          tab2={{
-            id: "base64",
-            label: "Base64",
-            content: base64Response?.fullResponse && (
-              <SimulatedResponse
-                xdrFormat="xdr"
-                result={base64Response}
-                isFullResponseEnabled={isFullResponseEnabled}
-              />
-            ),
-            isDisabled: !base64Response?.fullResponse,
-          }}
-          activeTabId={xdrFormat}
-          onTabChange={(id) => {
-            setXdrFormat(id);
+        <SimulatedResponse
+          xdrFormat={xdrFormat}
+          result={xdrFormat === "json" ? jsonResponse : base64Response}
+          isFullResponseEnabled={isFullResponseEnabled}
+          onFullResponseChange={setIsFullResponseEnabled}
+          funcName={funcName}
+          onLanguageChange={(id) => {
+            const selectedValue = id === "xdr" ? "base64" : "json";
+
+            setXdrFormat(selectedValue);
             trackEvent(
               TrackingEvent.SMART_CONTRACTS_EXPLORER_INVOKE_CONTRACT_SELECTED_XDR_FORMAT,
               {
-                xdrFormat: id,
+                xdrFormat: selectedValue,
               },
             );
           }}
-          rightElement={
-            <FullResponseToggle
-              isChecked={isFullResponseEnabled}
-              onChange={setIsFullResponseEnabled}
-              id={funcName}
-            />
-          }
         />
       );
     }
@@ -707,14 +711,6 @@ export const InvokeContractForm = ({
     simulateTxData?.result?.transactionData ||
     simulateTxData?.result?.transactionDataJson;
 
-  const isSubmitDisabled =
-    !!invokeError?.message ||
-    isSubmitRpcError ||
-    isSimulating ||
-    !walletKit?.publicKey ||
-    !hasNoFormErrors ||
-    !simulatedResultResponse;
-
   const isSimulationDisabled = () => {
     const currentKey = Object.keys(formValue.args)[0];
     const isEmptyArgs =
@@ -724,6 +720,19 @@ export const InvokeContractForm = ({
 
     return !hasNoFormErrors || disabled;
   };
+
+  const isAnotherSigningMethod = signingMethod === "another";
+
+  // When redirecting to /transaction/build, only form validity is required:
+  // simulation, wallet connection, and prior submit errors don't apply.
+  const isSubmitDisabled = isAnotherSigningMethod
+    ? isSimulationDisabled()
+    : !!invokeError?.message ||
+      isSubmitRpcError ||
+      isSimulating ||
+      !walletKit?.publicKey ||
+      !hasNoFormErrors ||
+      !simulatedResultResponse;
 
   return (
     <Card>
@@ -750,11 +759,20 @@ export const InvokeContractForm = ({
           <Button
             size="md"
             variant="secondary"
-            isLoading={isExtensionLoading || isSubmitRpcPending}
+            icon={isAnotherSigningMethod ? <Icon.ArrowRight /> : null}
+            isLoading={
+              isAnotherSigningMethod
+                ? false
+                : isExtensionLoading || isSubmitRpcPending
+            }
             disabled={isSubmitDisabled}
-            onClick={handleSimulateAndSubmit}
+            onClick={
+              isAnotherSigningMethod
+                ? handleRedirectToBuildFlow
+                : handleSimulateAndSubmit
+            }
           >
-            Simulate & submit
+            {isAnotherSigningMethod ? "Build transaction" : "Simulate & submit"}
           </Button>
         </Box>
 
@@ -798,11 +816,17 @@ export const FullResponseToggle = ({
 export const SimulatedResponse = ({
   result,
   isFullResponseEnabled = false,
+  onFullResponseChange,
+  funcName,
   xdrFormat,
+  onLanguageChange,
 }: {
   result: SimulatedResponseType | null;
   isFullResponseEnabled: boolean;
-  xdrFormat: string;
+  onFullResponseChange: (isChecked: boolean) => void;
+  funcName: string;
+  xdrFormat: XdrFormatType;
+  onLanguageChange: (format: string) => void;
 }) => {
   if (!result) {
     return null;
@@ -823,10 +847,20 @@ export const SimulatedResponse = ({
     <Box gap="md">
       <div data-testid="invoke-contract-simulate-tx-response">
         <CodeEditor
+          title="Simulated result"
+          languages={["json", "xdr"]}
+          onLanguageChange={onLanguageChange}
+          selectedLanguage={selectedLanguage}
+          customEl={
+            <FullResponseToggle
+              isChecked={isFullResponseEnabled}
+              onChange={onFullResponseChange}
+              id={funcName}
+            />
+          }
           key={`code-editor-${isFullResponseEnabled}`}
           isAutoHeight={!isFullResponseEnabled}
           value={JSON.stringify(json, null, 2)}
-          selectedLanguage={selectedLanguage}
           maxHeightInRem="20"
         />
       </div>

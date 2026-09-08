@@ -80,7 +80,7 @@ export enum Routes {
   // Transactions
   TRANSACTION = "/transaction",
   BUILD_TRANSACTION = "/transaction/build",
-  SIGN_TRANSACTION = "/transaction/sign",
+  IMPORT_TRANSACTION = "/transaction/import",
   CLI_SIGN_TRANSACTION = "/transaction/cli-sign",
   SIMULATE_TRANSACTION = "/transaction/simulate",
   SUBMIT_TRANSACTION = "/transaction/submit",
@@ -103,4 +103,6 @@ export enum Routes {
   NETWORK_LIMITS = "/network-limits",
   // Playground
   PLAYGROUND = "/playground",
+  // Sign message
+  SIGN_MESSAGE = "/sign-message",
 }

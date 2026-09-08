@@ -1,3 +1,4 @@
+import { getErrorMessage } from "@/helpers/errorUtils";
 import { NetworkHeaders } from "@/types/types";
 import { useQuery } from "@tanstack/react-query";
 
@@ -14,7 +15,7 @@ export const useAccountInfo = ({
   headers: NetworkHeaders;
 }) => {
   const query = useQuery({
-    queryKey: ["accountInfo", publicKey],
+    queryKey: ["accountInfo", publicKey, horizonUrl, headers],
     queryFn: async () => {
       if (IS_MOCK_MODE) {
         return getMockAccountInfo(publicKey);
@@ -38,8 +39,8 @@ export const useAccountInfo = ({
           isFunded: true,
           details: responseJson,
         };
-      } catch (e: any) {
-        throw `Something went wrong. ${e}`;
+      } catch (error) {
+        throw new Error(`Something went wrong. ${getErrorMessage(error)}`);
       }
     },
     enabled: false,

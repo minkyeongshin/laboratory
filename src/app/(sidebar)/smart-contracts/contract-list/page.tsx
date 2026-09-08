@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Text } from "@stellar/design-system";
 
 import { TabView } from "@/components/TabView";
@@ -13,25 +12,28 @@ import { SwitchNetworkButtons } from "@/components/SwitchNetworkButtons";
 import { useStore } from "@/store/useStore";
 
 import { RecentList } from "./components/RecentList";
-import { PopularList } from "./components/PopularList";
+import { DefiList } from "./components/DefiList";
+import { KnownAssetsList } from "./components/KnownAssetsList";
+
+import { ContractListTabId } from "@/types/types";
 
 export default function ContractList() {
-  const { network } = useStore();
+  const { network, smartContracts } = useStore();
+  const { contractList, updateContractListActiveTab } = smartContracts;
 
-  type ContractListTabId = "popular" | "recent";
-
-  // Default to "recent" on testnet, "popular" on mainnet
-  const [activeTab, setActiveTab] = useState<ContractListTabId>(
-    network.id === "testnet" ? "recent" : "popular",
-  );
-
-  useEffect(() => {
-    if (network.id === "testnet") {
-      setActiveTab("recent");
-    } else if (network.id === "mainnet") {
-      setActiveTab("popular");
+  // Persisted to the URL so a tab can be shared; defaults to "defi".
+  const isContractListTabId = (value: string): value is ContractListTabId =>
+    value === "defi" || value === "known-assets" || value === "recent";
+  const activeTab: ContractListTabId = isContractListTabId(
+    contractList.activeTab,
+  )
+    ? contractList.activeTab
+    : "defi";
+  const setActiveTab = (tabId: string) => {
+    if (isContractListTabId(tabId)) {
+      updateContractListActiveTab(tabId);
     }
-  }, [network.id]);
+  };
 
   const renderContent = () => {
     if (network.id === "futurenet") {
@@ -59,15 +61,15 @@ export default function ContractList() {
         <Box gap="lg" addlClassName="TabView">
           <div className="TabView__heading">
             <PageHeader heading="Smart contract list" />
-            <div className="TabView__tabContainer">
-              <Tabs
-                tabs={[{ id: "recent", label: "Recent" }]}
-                activeTabId="recent"
-                onChange={() => {
-                  // Single tab - no action needed
-                }}
-              />
-            </div>
+          </div>
+          <div className="TabView__tabContainer">
+            <Tabs
+              tabs={[{ id: "recent", label: "Recent" }]}
+              activeTabId="recent"
+              onChange={() => {
+                // Single tab - no action needed
+              }}
+            />
           </div>
           <div className="TabView__content">
             {/* data-is-active is required for TabView CSS styling */}
@@ -79,24 +81,30 @@ export default function ContractList() {
       );
     }
 
-    // On mainnet, show tabs with Popular and Recent
+    // On mainnet, show tabs with DeFi, Known assets, and Recent
     return (
       <TabView
         heading={{ title: "Smart contract list" }}
         tab1={{
-          id: "popular",
-          label: "Popular",
-          content: activeTab === "popular" ? <PopularList /> : null,
+          id: "defi",
+          label: "DeFi",
+          content: activeTab === "defi" ? <DefiList /> : null,
           isDisabled: network.id !== "mainnet",
         }}
         tab2={{
+          id: "known-assets",
+          label: "Known assets",
+          content: activeTab === "known-assets" ? <KnownAssetsList /> : null,
+          isDisabled: network.id !== "mainnet",
+        }}
+        tab3={{
           id: "recent",
           label: "Recent",
           content: activeTab === "recent" ? <RecentList /> : null,
         }}
         activeTabId={activeTab}
         onTabChange={(tabId) => {
-          setActiveTab(tabId as ContractListTabId);
+          setActiveTab(tabId);
         }}
       />
     );

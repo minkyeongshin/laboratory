@@ -13,7 +13,7 @@ export const useBuildVerification = ({
 }) => {
   const queries = useQueries({
     queries: contractIds.map((contractId) => ({
-      queryKey: ["buildVerification", contractId, rpcUrl],
+      queryKey: ["buildVerification", contractId, rpcUrl, headers],
       queryFn: () =>
         getBuildVerification({
           contractId,
@@ -29,7 +29,8 @@ export const useBuildVerification = ({
   const verifications = queries.reduce(
     (acc, query, index) => {
       const contractId = contractIds[index];
-      acc[contractId] = (query.data as BuildVerificationStatus) || "unverified";
+      acc[contractId] =
+        (query.data as BuildVerificationStatus) || "unverified_build";
       return acc;
     },
     {} as Record<string, BuildVerificationStatus>,

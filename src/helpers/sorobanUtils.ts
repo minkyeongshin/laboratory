@@ -1,6 +1,7 @@
 import {
   Address,
   Contract,
+  FeeBumpTransaction,
   Operation,
   TransactionBuilder,
   xdr,
@@ -27,6 +28,24 @@ export const isSorobanOperationType = (operationType: string) =>
     "invokeHostFunction",
   ].includes(operationType);
 
+// True when the envelope already carries SorobanTransactionData (footprint,
+// resource fees) — i.e. the tx has been simulated/assembled. The v1 envelope
+// tx.ext is a union: switch value 0 = none, 1 = sorobanData.
+export const hasSorobanData = (
+  tx: Transaction | FeeBumpTransaction,
+): boolean => {
+  const inner = tx instanceof FeeBumpTransaction ? tx.innerTransaction : tx;
+  try {
+    const envelope = xdr.expectUnionVariant(
+      inner.toEnvelope(),
+      "envelopeTypeTx",
+    );
+    return envelope.v1.tx.ext.type === "sorobanData";
+  } catch {
+    return false;
+  }
+};
+
 // https://developers.stellar.org/docs/learn/glossary#ledgerkey
 // https://developers.stellar.org/docs/build/guides/archival/restore-data-js
 // Setup contract data xdr that will be used to build Soroban Transaction Data
@@ -48,22 +67,22 @@ export const getContractDataXDR = ({
   const getXdrDurability = (durability: string) => {
     switch (durability) {
       case "persistent":
-        return xdr.ContractDataDurability.persistent();
+        return xdr.ContractDataDurability.persistent;
       // https://developers.stellar.org/docs/build/guides/storage/choosing-the-right-storage#temporary-storage
       // TTL for the temporary data can be extended; however,
       // it is unsafe to rely on the extensions to preserve data since
       // there is always a risk of losing temporary data
       case "temporary":
-        return xdr.ContractDataDurability.temporary();
+        return xdr.ContractDataDurability.temporary;
       default:
-        return xdr.ContractDataDurability.persistent();
+        return xdr.ContractDataDurability.persistent;
     }
   };
 
   return xdr.LedgerKey.contractData(
     new xdr.LedgerKeyContractData({
       contract: address.toScAddress(),
-      key: xdr.ScVal.fromXDR(xdrBinary),
+      key: xdr.ScVal.fromXdr(xdrBinary),
       durability: getXdrDurability(durability),
     }),
   );
@@ -111,7 +130,8 @@ export const buildTxWithSorobanData = ({
   const account = new Account(params.source_account, txSeq);
 
   // https://developers.stellar.org/docs/learn/fundamentals/fees-resource-limits-metering
-  const totalTxFee = BigInt(params.fee) + BigInt(sorobanOp.params.resource_fee);
+  const totalTxFee =
+    BigInt(params.fee) + BigInt(sorobanOp.params.resource_fee || BASE_FEE);
 
   const getMemoValue = (memoType: string, memoValue: string) => {
     switch (memoType) {
@@ -177,7 +197,7 @@ export const buildTxWithSorobanData = ({
     .build();
 };
 
-/* 
+/*
   get a transaction xdr with Soroban data to simulate with
 */
 export const getTxWithSorobanData = ({
@@ -194,7 +214,7 @@ export const getTxWithSorobanData = ({
     const contractDataXdr =
       operation.operation_type === "restore_footprint" ||
       operation.operation_type === "extend_footprint_ttl"
-        ? xdr.LedgerKey.fromXDR(
+        ? xdr.LedgerKey.fromXdr(
             operation.params.contractDataLedgerKey,
             "base64",
           )
@@ -207,7 +227,7 @@ export const getTxWithSorobanData = ({
     const sorobanData = getSorobanTxData({
       contractDataXdr,
       operationType: operation.operation_type as SorobanOpType,
-      fee: operation.params.resource_fee,
+      fee: operation.params.resource_fee || BASE_FEE,
     });
 
     if (sorobanData) {
@@ -218,7 +238,7 @@ export const getTxWithSorobanData = ({
         networkPassphrase: networkPassphrase,
       });
 
-      const sorobanTxXdrString = sorobanTx.toXDR();
+      const sorobanTxXdrString = sorobanTx.toXdr();
 
       return { xdr: sorobanTxXdrString, error: undefined };
     } else {
@@ -255,7 +275,7 @@ export const getTxnToSimulate = (
       networkPassphrase,
     });
 
-    return { xdr: builtXdr.toXDR(), error: "" };
+    return { xdr: builtXdr.toXdr(), error: "" };
   } catch (e: any) {
     return { xdr: "", error: e.message };
   }
@@ -701,3 +721,30 @@ export const convertSpecTypeToScValType = (type: string) => {
 };
 
 export const hasTypeAndValue = (v: any) => v?.type && v.value !== undefined;
+
+/**
+ * Determines if the simulation result indicates a read-only transaction
+ * (no write footprint).
+ */
+export const checkIsReadOnly = (responseData: Record<string, any>): boolean => {
+  try {
+    const result = responseData?.result;
+
+    if (!result) return false;
+
+    // Check if there's a transaction data with no write footprint
+    const transactionData = result?.transactionData as string | undefined;
+    if (transactionData) {
+      const sorobanData = xdr.SorobanTransactionData.fromXdr(
+        transactionData,
+        "base64",
+      );
+      const writeKeys = sorobanData.resources.footprint.readWrite.length;
+      return writeKeys === 0;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+};

@@ -10,7 +10,7 @@ import { TextPicker } from "@/components/FormElements/TextPicker";
 import { Box } from "@/components/layout/Box";
 import { InputSideElement } from "@/components/InputSideElement";
 import { LabelHeading } from "@/components/LabelHeading";
-import { SignerSelector } from "@/components/SignerSelector";
+import { AddressSelector } from "@/components/AddressSelector";
 
 type Values = string[];
 
@@ -30,6 +30,9 @@ type MultiPickerProps = {
   isPassword?: boolean;
   rightElement?: (index: number) => React.ReactNode;
   useSecretSelector?: boolean;
+  submitButton?: React.ReactNode;
+  /** Hide the "Add additional" button (e.g. for single-value pickers). */
+  hideAddButton?: boolean;
 };
 
 export const MultiPicker = ({
@@ -47,6 +50,8 @@ export const MultiPicker = ({
   note,
   isPassword,
   useSecretSelector = false,
+  submitButton,
+  hideAddButton = false,
 }: MultiPickerProps) => {
   if (!value || !value.length) {
     value = [];
@@ -94,7 +99,7 @@ export const MultiPicker = ({
                     rightElement={
                       <>
                         {useSecretSelector ? (
-                          <SignerSelector.Button
+                          <AddressSelector.Button
                             mode="secret"
                             onClick={() => {
                               setIsSelectorOpen({ visible: true, index });
@@ -118,7 +123,7 @@ export const MultiPicker = ({
                     isPassword={isPassword}
                   />
                   {useSecretSelector ? (
-                    <SignerSelector.Dropdown
+                    <AddressSelector.Dropdown
                       mode="secret"
                       isOpen={
                         index === isSelectorOpen.index && isSelectorOpen.visible
@@ -145,8 +150,8 @@ export const MultiPicker = ({
           <div className="FieldNote FieldNote--note FieldNote--md">{note}</div>
         ) : null}
       </>
-      <>
-        {!useAutoAdd ? (
+      <Box gap="sm" direction="row" align="center">
+        {!useAutoAdd && !hideAddButton ? (
           <div>
             <Button
               disabled={value.length === limit}
@@ -161,7 +166,8 @@ export const MultiPicker = ({
             </Button>
           </div>
         ) : null}
-      </>
+        {submitButton || null}
+      </Box>
     </Box>
   );
 };

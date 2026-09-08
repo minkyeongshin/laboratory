@@ -14,12 +14,15 @@ import { Box } from "@/components/layout/Box";
 import { MessageField } from "@/components/MessageField";
 import { TextPicker } from "@/components/FormElements/TextPicker";
 import { LabelHeading } from "@/components/LabelHeading";
-import { WithInfoText } from "@/components/WithInfoText";
 import { PubKeyPickerWithSignerSelector } from "@/components/FormElements/PubKeyPickerWithSignerSelector";
 
 import { txHelper } from "@/helpers/txHelper";
 import { arrayItem } from "@/helpers/arrayItem";
 import { shortenStellarAddress } from "@/helpers/shortenStellarAddress";
+import {
+  getAllSigsMessage,
+  type AllSigsCount,
+} from "@/helpers/getAllSigsMessage";
 
 import { validate } from "@/validate";
 import { useSignWithExtensionWallet } from "@/hooks/useSignWithExtensionWallet";
@@ -36,13 +39,6 @@ type TxSignatureType =
 
 type UniqueTabId = `${string}-${TxSignatureType}`;
 
-type AllSigsCount = {
-  secretKey: number;
-  extensionWallet: number;
-  hardwareWallet: number;
-  signature: number;
-};
-
 export const SignTransactionXdr = ({
   id,
   title,
@@ -52,9 +48,10 @@ export const SignTransactionXdr = ({
   isDisabled = false,
   description,
   customFooter,
+  customSignFn,
 }: {
   id: string;
-  title: string;
+  title?: string;
   xdrToSign: string | null;
   onDoneAction: ({
     signedXdr,
@@ -69,6 +66,18 @@ export const SignTransactionXdr = ({
   isDisabled?: boolean;
   description?: string;
   customFooter?: React.ReactNode;
+  /**
+   * Optional custom signing function. When provided, replaces the default
+   * envelope signing logic. Used for Soroban auth entry signing where
+   * `authorizeEntry()` is needed instead of `tx.sign()`.
+   *
+   * Receives the secret key inputs and should return success/error messages.
+   * The component manages its own UI state (tabs, messages) around this.
+   */
+  customSignFn?: (params: {
+    sigType: TxSignatureType;
+    secretKeys: string[];
+  }) => Promise<{ successMessage: string; errorMessage: string }>;
 }) => {
   const { network, walletKit } = useStore();
 
@@ -171,6 +180,42 @@ export const SignTransactionXdr = ({
       return;
     }
 
+    // Custom sign mode: delegate signing to external handler
+    if (customSignFn && !isClear) {
+      try {
+        const result = await customSignFn({
+          sigType,
+          secretKeys: secretKeyInputs,
+        });
+
+        if (result.successMessage) {
+          setSecretKeySuccessMsg(result.successMessage);
+          setSecretKeyErrorMsg("");
+          setAllSigsCount((prev) => ({ ...prev, secretKey: 1 }));
+        }
+
+        if (result.errorMessage) {
+          setSecretKeyErrorMsg(result.errorMessage);
+          setSecretKeySuccessMsg("");
+        }
+
+        onDoneAction({
+          signedXdr: null,
+          successMessage: result.successMessage || null,
+          errorMessage: result.errorMessage || null,
+        });
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        setSecretKeyErrorMsg(msg);
+        onDoneAction({
+          signedXdr: null,
+          successMessage: null,
+          errorMessage: msg,
+        });
+      }
+      return;
+    }
+
     onDoneAction({
       signedXdr: null,
       successMessage: null,
@@ -262,9 +307,9 @@ export const SignTransactionXdr = ({
         if (isExtensionWalletOnly && exSignedTxXdr) {
           signedTx = exSignedTxXdr;
         } else {
-          const tx = TransactionBuilder.fromXDR(xdrToSign, network.passphrase);
+          const tx = TransactionBuilder.fromXdr(xdrToSign, network.passphrase);
           tx.signatures.push(...allSigs);
-          signedTx = tx.toEnvelope().toXDR("base64");
+          signedTx = tx.toEnvelope().toXdr("base64");
         }
 
         onDoneAction({
@@ -347,7 +392,7 @@ export const SignTransactionXdr = ({
   const signHardwareWallet = async (txXdr: string, isClear?: boolean) => {
     setIsHardwareLoading(true);
 
-    const txToSign = TransactionBuilder.fromXDR(txXdr, network.passphrase) as
+    const txToSign = TransactionBuilder.fromXdr(txXdr, network.passphrase) as
       | FeeBumpTransaction
       | Transaction;
     let signature: xdr.DecoratedSignature[] = [];
@@ -470,7 +515,7 @@ export const SignTransactionXdr = ({
   };
 
   const SignTxButton = ({
-    label = "Sign transaction",
+    label = "Sign",
     onSign,
     onClear,
     isDisabled,
@@ -600,40 +645,6 @@ export const SignTransactionXdr = ({
     );
   };
 
-  const getAllSigsMessage = ({
-    secretKey,
-    extensionWallet,
-    hardwareWallet,
-    signature,
-  }: AllSigsCount) => {
-    const allMsgs = [];
-
-    const getMsg = (count: number, label: string) =>
-      `${count} ${label} signature${count > 1 ? "s" : ""}`;
-
-    if (secretKey > 0) {
-      allMsgs.push(getMsg(secretKey, "secret key"));
-    }
-
-    if (hardwareWallet > 0) {
-      allMsgs.push(getMsg(hardwareWallet, "hardware wallet"));
-    }
-
-    if (extensionWallet > 0) {
-      allMsgs.push(getMsg(extensionWallet, "extension wallet"));
-    }
-
-    if (signature > 0) {
-      allMsgs.push(getMsg(signature, ""));
-    }
-
-    if (allMsgs.length > 0) {
-      return `${allMsgs.join(", ")} added`;
-    }
-
-    return "";
-  };
-
   return (
     <div
       className="SignTransactionXdr"
@@ -642,7 +653,7 @@ export const SignTransactionXdr = ({
     >
       <Box gap="md" direction="column">
         {/* Title */}
-        <WithInfoText href="https://developers.stellar.org/docs/learn/encyclopedia/signatures-multisig">
+        {title ? (
           <Text
             as="div"
             size="sm"
@@ -651,7 +662,7 @@ export const SignTransactionXdr = ({
           >
             {title}
           </Text>
-        </WithInfoText>
+        ) : null}
 
         {description ? (
           <Text size="sm" weight="regular" as="div">
@@ -690,7 +701,7 @@ export const SignTransactionXdr = ({
           />
           <Tab
             id={`${id}-signature`}
-            label="Add a signature to transaction envelope"
+            label="Transaction envelope"
             isSelected={selectedTab === "signature"}
             signatureCount={allSigsCount.signature}
             onTabChange={(tabId) => {
@@ -724,18 +735,21 @@ export const SignTransactionXdr = ({
             autocomplete="off"
             isPassword
             useSecretSelector
-          />
-          <SignTxButton
-            onSign={async () => {
-              await handleSign({ sigType: "secretKey", isClear: false });
-            }}
-            onClear={async () => {
-              await handleSign({ sigType: "secretKey", isClear: true });
-              setSecretKeyInputs([""]);
-            }}
-            isDisabled={!HAS_SECRET_KEYS || HAS_INVALID_SECRET_KEYS}
-            successMsg={secretKeySuccessMsg}
-            errorMsg={secretKeyErrorMsg}
+            limit={customSignFn ? 1 : undefined}
+            submitButton={
+              <SignTxButton
+                onSign={async () => {
+                  await handleSign({ sigType: "secretKey", isClear: false });
+                }}
+                onClear={async () => {
+                  await handleSign({ sigType: "secretKey", isClear: true });
+                  setSecretKeyInputs([""]);
+                }}
+                isDisabled={!HAS_SECRET_KEYS || HAS_INVALID_SECRET_KEYS}
+                successMsg={secretKeySuccessMsg}
+                errorMsg={secretKeyErrorMsg}
+              />
+            }
           />
         </div>
 
