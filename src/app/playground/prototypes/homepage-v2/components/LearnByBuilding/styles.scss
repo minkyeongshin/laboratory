@@ -55,5 +55,28 @@
   &__viewAll {
     display: flex;
     justify-content: flex-end;
+
+    // The design has no border here, but every SDS Button variant sets
+    // --Button-color-border-default, so "tertiary" (already the closest) still
+    // paints one. Neutralising the two colour variables is lighter than
+    // rebuilding the button, and keeps its sizing, icon slot, and focus ring.
+    .Button {
+      --Button-color-border-default: transparent;
+      --Button-color-background-default: transparent;
+      --Button-color-border-hover: transparent;
+      --Button-color-background-hover: transparent;
+      --Button-color-border-active: transparent;
+      --Button-color-background-active: transparent;
+
+      padding-left: 0;
+      padding-right: 0;
+
+      @media (hover: hover) {
+        &:hover {
+          --Button-color-text-hover: var(--sds-clr-lilac-11);
+          --Button-color-icon-hover: var(--sds-clr-lilac-11);
+        }
+      }
+    }
   }
 }

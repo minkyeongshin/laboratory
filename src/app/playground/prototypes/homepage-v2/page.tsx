@@ -45,7 +45,7 @@ export default function HomepageV2() {
 
         <Box gap="custom" customValue="16px">
           <SectionHeader title="Explore &amp; inspect" />
-          <ExploreInspect imgTheme={imgTheme} />
+          <ExploreInspect />
         </Box>
 
         <Box gap="custom" customValue="16px">

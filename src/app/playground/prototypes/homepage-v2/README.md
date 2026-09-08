@@ -37,11 +37,12 @@ Built from Figma node `9477:68721`.
 
 **Assets**
 
-- **Dark variants do not exist.** All eight rasters are light-only. Image
-  handling is structured as a theme-keyed lookup (`mock-data.ts`, `ThemedImage`)
-  mirroring production's `-${imgTheme}` convention, and `dark` currently
-  resolves to the light file. When the designer exports dark assets, add the
-  import and change one value per entry — no consumer changes.
+- **Dark variants do not exist.** The four remaining rasters (three tutorial
+  thumbnails plus the save/share art) are light-only. Image handling is
+  structured as a theme-keyed lookup (`mock-data.ts`, `ThemedImage`) mirroring
+  production's `-${imgTheme}` convention, and `dark` currently resolves to the
+  light file. When the designer exports dark assets, add the import and change
+  one value per entry — no consumer changes.
 - **`save-share-composite-light.png` is a 1x placeholder.** §7's art is a live
   Figma composition of real component instances, not an exportable asset, so it
   was captured as a 591x179 render. It is soft on retina. The designer is
@@ -75,6 +76,9 @@ Per `rules/02-styling.md`, gaps flagged rather than worked around:
   used as-is; cards are a few px taller than the comps.
 - **No 36px button.** Figma's network buttons are 36px; SDS has md=32 and lg=40.
   Used md.
+- **No borderless button variant.** All six SDS `Button` variants set
+  `--Button-color-border-default`, so "View all tutorials" neutralises the
+  border and background variables locally rather than rebuilding the button.
 - **Border radii and card padding** (6px, 24px, 4px) have no SDS token and live
   in local SCSS via `pxToRem`.
 

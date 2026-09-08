@@ -14,7 +14,10 @@ import "./styles.scss";
 export const Hero = () => (
   <Box gap="custom" customValue="24px" addlClassName="Hero">
     <Heading as="h1" size="md" weight="medium">
-      Simulate, analyze, and explore — all in one place
+      {/* The design breaks the line before the em dash rather than letting it
+          wrap naturally, so the break is explicit. */}
+      Simulate, analyze, and explore
+      <br />— all in one place
     </Heading>
 
     <Text as="p" size="sm" addlClassName="Hero__subtitle">

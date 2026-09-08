@@ -10,10 +10,6 @@ import type { StaticImageData } from "next/image";
 
 import { Routes } from "@/constants/routes";
 
-import exploreTransactions from "./assets/explore-transactions-light.png";
-import exploreSmartContracts from "./assets/explore-smart-contracts-light.png";
-import exploreApiExplorer from "./assets/explore-api-explorer-light.png";
-import exploreXdrTools from "./assets/explore-xdr-tools-light.png";
 import tutorialCreateAccount from "./assets/tutorial-create-account-light.png";
 import tutorialPayments from "./assets/tutorial-payments-light.png";
 import tutorialHelloWorld from "./assets/tutorial-hello-world-light.png";
@@ -72,34 +68,32 @@ export const mockStartBuilding: LinkCard[] = [
   },
 ];
 
-export const mockExploreInspect: (LinkCard & { image: ThemedImage })[] = [
+// Text-only by design — the illustrations in the earlier Figma export were
+// dropped by the designer.
+export const mockExploreInspect: LinkCard[] = [
   {
     id: "transactions",
     title: "Transactions",
     description: "Build, simulate, sign, submit, and inspect transactions.",
     route: Routes.TRANSACTION,
-    image: themed(exploreTransactions),
   },
   {
     id: "smart-contracts",
     title: "Smart contracts",
     description: "Deploy, explore, and interact with contracts.",
     route: Routes.SMART_CONTRACTS,
-    image: themed(exploreSmartContracts),
   },
   {
     id: "api-explorer",
     title: "API explorer",
     description: "Explore and test Stellar RPC methods and Horizon endpoints.",
     route: Routes.ENDPOINTS,
-    image: themed(exploreApiExplorer),
   },
   {
     id: "xdr-tools",
     title: "XDR tools",
     description: "Decode, encode, and compare Stellar XDR.",
     route: Routes.XDR,
-    image: themed(exploreXdrTools),
   },
 ];
 
