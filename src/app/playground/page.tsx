@@ -60,11 +60,7 @@ export default function Playground() {
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formError, setFormError] = useState("");
-  const [formStartFrom, setFormStartFrom] = useState<"blank" | "existing">(
-    "blank",
-  );
   const [formExistingPage, setFormExistingPage] = useState("");
-  const [formIncludeSidebar, setFormIncludeSidebar] = useState(true);
 
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<PlaygroundPrototype | null>(
@@ -122,9 +118,7 @@ export default function Playground() {
     setFormName("");
     setFormDescription("");
     setFormError("");
-    setFormStartFrom("blank");
     setFormExistingPage("");
-    setFormIncludeSidebar(true);
   };
 
   const closeModal = useCallback(() => {
@@ -202,9 +196,9 @@ export default function Playground() {
       return;
     }
 
-    // Validate existing page selection
-    if (formStartFrom === "existing" && !formExistingPage) {
-      setFormError("Please select a page to copy");
+    // Validate page selection
+    if (!formExistingPage) {
+      setFormError("Please select a page");
       return;
     }
 
@@ -217,10 +211,7 @@ export default function Playground() {
         body: JSON.stringify({
           name: formName.trim(),
           description: formDescription.trim(),
-          startFrom:
-            formStartFrom === "existing"
-              ? { type: "existing", sourceKey: formExistingPage }
-              : { type: "blank", includeSidebar: formIncludeSidebar },
+          startFrom: { type: "existing", sourceKey: formExistingPage },
         }),
       });
 
@@ -421,76 +412,32 @@ export default function Playground() {
               </div>
 
               <div className="Playground__form-field">
-                <label className="Playground__form-label">Start from</label>
-                <div className="Playground__form-radio-group">
-                  <label className="Playground__form-radio">
-                    <input
-                      type="radio"
-                      name="startFrom"
-                      value="blank"
-                      checked={formStartFrom === "blank"}
-                      onChange={() => {
-                        setFormStartFrom("blank");
-                        setFormExistingPage("");
-                      }}
-                      disabled={isSubmitting}
-                    />
-                    <span>Blank page</span>
-                  </label>
-                  {formStartFrom === "blank" && (
-                    <label className="Playground__form-checkbox Playground__form-checkbox--indented">
-                      <input
-                        type="checkbox"
-                        checked={formIncludeSidebar}
-                        onChange={(e) => setFormIncludeSidebar(e.target.checked)}
-                        disabled={isSubmitting}
-                      />
-                      <span>Include sidebar</span>
-                    </label>
+                <select
+                  className="Playground__form-select"
+                  value={formExistingPage}
+                  onChange={(e) => setFormExistingPage(e.target.value)}
+                  disabled={isSubmitting}
+                >
+                  <option value="">Select a page...</option>
+                  {EXISTING_PAGES.filter((p) => !p.category).map((page) => (
+                    <option key={page.key} value={page.key}>
+                      {page.label}
+                    </option>
+                  ))}
+                  {["XDR", "Account", "Transactions", "Smart Contracts"].map(
+                    (category) => (
+                      <optgroup key={category} label={category}>
+                        {EXISTING_PAGES.filter(
+                          (p) => p.category === category,
+                        ).map((page) => (
+                          <option key={page.key} value={page.key}>
+                            {page.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ),
                   )}
-                  <label className="Playground__form-radio">
-                    <input
-                      type="radio"
-                      name="startFrom"
-                      value="existing"
-                      checked={formStartFrom === "existing"}
-                      onChange={() => setFormStartFrom("existing")}
-                      disabled={isSubmitting}
-                    />
-                    <span>Existing Lab page</span>
-                  </label>
-                </div>
-
-                {formStartFrom === "existing" && (
-                  <select
-                    className="Playground__form-select"
-                    value={formExistingPage}
-                    onChange={(e) => setFormExistingPage(e.target.value)}
-                    disabled={isSubmitting}
-                  >
-                    <option value="">Select a page...</option>
-                    {/* Ungrouped items first */}
-                    {EXISTING_PAGES.filter((p) => !p.category).map((page) => (
-                      <option key={page.key} value={page.key}>
-                        {page.label}
-                      </option>
-                    ))}
-                    {/* Grouped items */}
-                    {["XDR", "Account", "Transactions", "Smart Contracts"].map(
-                      (category) => (
-                        <optgroup key={category} label={category}>
-                          {EXISTING_PAGES.filter(
-                            (p) => p.category === category,
-                          ).map((page) => (
-                            <option key={page.key} value={page.key}>
-                              {page.label}
-                            </option>
-                          ))}
-                        </optgroup>
-                      ),
-                    )}
-                  </select>
-                )}
+                </select>
               </div>
 
               {formError && (
@@ -509,7 +456,7 @@ export default function Playground() {
                 <button
                   type="submit"
                   className="Playground__modal-submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !formExistingPage}
                 >
                   {isSubmitting ? "Creating..." : "Create"}
                 </button>

@@ -1,0 +1,107 @@
+.StellarSkillsDemo {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--sds-clr-gray-02);
+}
+
+.StellarSkillsDemo__content {
+  flex: 1;
+  padding: 32px;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+
+  // Hero title: 40px/600, 80px margin at top, centered
+  h1 {
+    font-size: 40px;
+    font-weight: 600;
+    margin-top: 80px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .Tabs {
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+}
+
+// Featured section
+.StellarSkillsDemo__featured {
+  margin-bottom: 2rem;
+
+  .Tabs {
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+}
+
+.StellarSkillsDemo__featured-content {
+  display: flex;
+  justify-content: center;
+}
+
+.StellarSkillsDemo__this-chat {
+  display: flex;
+  justify-content: center;
+}
+
+.StellarSkillsDemo__install-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.StellarSkillsDemo__install-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  > span {
+    min-width: 100px;
+    padding-top: 4px;
+  }
+}
+
+.StellarSkillsDemo__install-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.StellarSkillsDemo__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 16px;
+
+  // Card styling per AGENTS.md: 8px padding
+  .Card {
+    --Card-padding: 8px;
+  }
+}
+
+.StellarSkillsDemo__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+
+  // Card title: 16px/600, primary text color
+  h3 {
+    font-weight: 600;
+    color: var(--sds-clr-gray-12);
+  }
+
+  // Card description: 14px/400, secondary text color, no bottom margin
+  p {
+    font-weight: 400;
+    color: var(--sds-clr-gray-11);
+    margin-bottom: 0;
+  }
+}

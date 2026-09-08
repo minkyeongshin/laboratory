@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-interface StartFromBlank {
-  type: "blank";
-  includeSidebar?: boolean;
-}
+import { SOURCE_PAGE_MAP } from "@/constants/playgroundSourcePages";
 
 interface StartFromExisting {
   type: "existing";
@@ -15,57 +12,8 @@ interface StartFromExisting {
 interface CreatePrototypeRequest {
   name: string;
   description?: string;
-  startFrom?: StartFromBlank | StartFromExisting;
+  startFrom: StartFromExisting;
 }
-
-// Mapping of source keys to actual file paths
-// basePath defaults to "src/app/(sidebar)" if not specified
-// externalComponents: folders from src/components/ to copy into prototype's components/
-const SOURCE_PAGE_MAP: Record<
-  string,
-  {
-    path: string;
-    basePath?: string;
-    hasStyles?: boolean;
-    hasComponents?: boolean;
-    externalComponents?: string[];
-  }
-> = {
-  // Introduction (special case - at root level, uses Home components)
-  introduction: {
-    path: "",
-    basePath: "src/app",
-    externalComponents: ["Home"],
-  },
-  // XDR
-  "xdr-to-json": { path: "xdr/view" },
-  "xdr-json-to": { path: "xdr/to" },
-  "xdr-diff": { path: "xdr/diff" },
-  // Account
-  "account-create-keypair": { path: "account/create" },
-  "account-fund": { path: "account/fund", hasComponents: true },
-  "account-muxed-create": { path: "account/muxed-create" },
-  "account-muxed-parse": { path: "account/muxed-parse" },
-  // Transactions
-  "transaction-dashboard": {
-    path: "transaction/dashboard",
-    hasStyles: true,
-    hasComponents: true,
-  },
-  "transaction-build": { path: "transaction/build", hasComponents: true },
-  "transaction-sign": { path: "transaction/sign", hasComponents: true },
-  "transaction-fee-bump": { path: "transaction/fee-bump" },
-  // Smart Contracts
-  "contract-explorer": {
-    path: "smart-contracts/contract-explorer",
-    hasComponents: true,
-  },
-  "contract-list": {
-    path: "smart-contracts/contract-list",
-    hasComponents: true,
-  },
-  "contract-deploy": { path: "smart-contracts/deploy-contract" },
-};
 
 /**
  * Converts a name to a kebab-case slug.
@@ -111,17 +59,6 @@ function isValidSlug(slug: string): boolean {
  */
 function getTodayDate(): string {
   return new Date().toISOString().split("T")[0];
-}
-
-/**
- * Converts kebab-case to PascalCase.
- * "my-cool-prototype" → "MyCoolPrototype"
- */
-function toPascalCase(slug: string): string {
-  return slug
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join("");
 }
 
 /**
@@ -222,21 +159,26 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { name, description = "", startFrom = { type: "blank" } } = body;
+  const { name, description = "", startFrom } = body;
 
   if (!name || typeof name !== "string" || name.trim().length === 0) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
-  // Validate startFrom
-  if (startFrom.type === "existing") {
-    const sourceKey = startFrom.sourceKey;
-    if (!sourceKey || !SOURCE_PAGE_MAP[sourceKey]) {
-      return NextResponse.json(
-        { error: "Invalid source page" },
-        { status: 400 },
-      );
-    }
+  // Validate startFrom - must be provided and reference a valid source page
+  if (!startFrom || startFrom.type !== "existing") {
+    return NextResponse.json(
+      { error: "Source page selection is required" },
+      { status: 400 },
+    );
+  }
+
+  const sourceKey = startFrom.sourceKey;
+  if (!sourceKey || !SOURCE_PAGE_MAP[sourceKey]) {
+    return NextResponse.json(
+      { error: "Invalid source page" },
+      { status: 400 },
+    );
   }
 
   // 3. Generate and validate slug
@@ -268,16 +210,8 @@ export async function POST(request: NextRequest) {
 
   // 5. Prepare common content
   const date = getTodayDate();
-  const pascalName = toPascalCase(slug);
   const title = name.trim();
   const desc = description.trim();
-  const isExisting = startFrom.type === "existing";
-  // Chrome mode: "full" for existing pages or blank with sidebar, "minimal" for blank without sidebar
-  const chromeMode = isExisting
-    ? "full"
-    : (startFrom as StartFromBlank).includeSidebar !== false
-      ? "full"
-      : "minimal";
 
   const readmeContent = `---
 title: ${title}
@@ -303,8 +237,8 @@ ${desc || "(To be filled in)"}
       author: "minkyeong",
       date,
       status: "exploring",
-      chrome: chromeMode,
-      startedFrom: isExisting ? (startFrom as StartFromExisting).sourceKey : null,
+      chrome: "full",
+      startedFrom: startFrom.sourceKey,
     },
     null,
     2,
@@ -332,113 +266,56 @@ export const mockData = {
     // Create prototype directory
     fs.mkdirSync(prototypeDir);
 
-    if (startFrom.type === "existing") {
-      // Copy from existing page
-      const sourceKey = (startFrom as StartFromExisting).sourceKey;
-      const sourceInfo = SOURCE_PAGE_MAP[sourceKey];
-      const basePath = sourceInfo.basePath || "src/app/(sidebar)";
-      const sourceDir = path.join(process.cwd(), basePath, sourceInfo.path);
+    // Copy from existing page
+    const sourceInfo = SOURCE_PAGE_MAP[startFrom.sourceKey];
+    const basePath = sourceInfo.basePath || "src/app/(sidebar)";
+    const sourceDir = path.join(process.cwd(), basePath, sourceInfo.path);
 
-      // Copy page.tsx
-      const sourcePagePath = path.join(sourceDir, "page.tsx");
-      if (fs.existsSync(sourcePagePath)) {
-        fs.copyFileSync(sourcePagePath, path.join(prototypeDir, "page.tsx"));
-        adjustImports(
-          path.join(prototypeDir, "page.tsx"),
-          sourceDir,
-          sourceInfo.externalComponents,
-        );
-      }
+    // Copy page.tsx
+    const sourcePagePath = path.join(sourceDir, "page.tsx");
+    if (fs.existsSync(sourcePagePath)) {
+      fs.copyFileSync(sourcePagePath, path.join(prototypeDir, "page.tsx"));
+      adjustImports(
+        path.join(prototypeDir, "page.tsx"),
+        sourceDir,
+        sourceInfo.externalComponents,
+      );
+    }
 
-      // Copy styles.scss if exists
-      const sourceStylesPath = path.join(sourceDir, "styles.scss");
-      if (fs.existsSync(sourceStylesPath)) {
-        fs.copyFileSync(
-          sourceStylesPath,
-          path.join(prototypeDir, "styles.scss"),
-        );
-      }
+    // Copy styles.scss if exists
+    const sourceStylesPath = path.join(sourceDir, "styles.scss");
+    if (fs.existsSync(sourceStylesPath)) {
+      fs.copyFileSync(
+        sourceStylesPath,
+        path.join(prototypeDir, "styles.scss"),
+      );
+    }
 
-      // Copy components directory if exists (co-located with page)
-      const sourceComponentsDir = path.join(sourceDir, "components");
-      if (fs.existsSync(sourceComponentsDir)) {
-        copyDir(sourceComponentsDir, path.join(prototypeDir, "components"));
-      }
+    // Copy components directory if exists (co-located with page)
+    const sourceComponentsDir = path.join(sourceDir, "components");
+    if (fs.existsSync(sourceComponentsDir)) {
+      copyDir(sourceComponentsDir, path.join(prototypeDir, "components"));
+    }
 
-      // Copy external components from src/components/
-      if (sourceInfo.externalComponents && sourceInfo.externalComponents.length > 0) {
-        const prototypeComponentsDir = path.join(prototypeDir, "components");
-        if (!fs.existsSync(prototypeComponentsDir)) {
-          fs.mkdirSync(prototypeComponentsDir);
-        }
-        for (const folder of sourceInfo.externalComponents) {
-          const externalDir = path.join(process.cwd(), "src/components", folder);
-          if (fs.existsSync(externalDir)) {
-            copyDir(externalDir, path.join(prototypeComponentsDir, folder));
-          }
-        }
-      }
-
-      // Ensure components directory exists (create with .gitkeep if empty)
+    // Copy external components from src/components/
+    if (sourceInfo.externalComponents && sourceInfo.externalComponents.length > 0) {
       const prototypeComponentsDir = path.join(prototypeDir, "components");
       if (!fs.existsSync(prototypeComponentsDir)) {
         fs.mkdirSync(prototypeComponentsDir);
-        fs.writeFileSync(path.join(prototypeComponentsDir, ".gitkeep"), "");
       }
-    } else {
-      // Create blank prototype
-      const componentsDir = path.join(prototypeDir, "components");
+      for (const folder of sourceInfo.externalComponents) {
+        const externalDir = path.join(process.cwd(), "src/components", folder);
+        if (fs.existsSync(externalDir)) {
+          copyDir(externalDir, path.join(prototypeComponentsDir, folder));
+        }
+      }
+    }
 
-      const pageContent = `"use client";
-
-import "./styles.scss";
-
-export default function ${pascalName}Prototype() {
-  return (
-    <div className="${pascalName}Prototype">
-      <header className="${pascalName}Prototype__header">
-        <h1>${title}</h1>
-        <p>${desc}</p>
-      </header>
-
-      <main className="${pascalName}Prototype__content">
-        {/* Prototype content here */}
-      </main>
-    </div>
-  );
-}
-`;
-
-      const stylesContent = `.${pascalName}Prototype {
-  padding: 2rem;
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-.${pascalName}Prototype__header {
-  margin-bottom: 2rem;
-
-  h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin: 0 0 0.5rem 0;
-  }
-
-  p {
-    color: var(--color-gray-700);
-    margin: 0;
-  }
-}
-
-.${pascalName}Prototype__content {
-  // Add prototype-specific styles
-}
-`;
-
-      fs.writeFileSync(path.join(prototypeDir, "page.tsx"), pageContent);
-      fs.writeFileSync(path.join(prototypeDir, "styles.scss"), stylesContent);
-      fs.mkdirSync(componentsDir);
-      fs.writeFileSync(path.join(componentsDir, ".gitkeep"), "");
+    // Ensure components directory exists (create with .gitkeep if empty)
+    const prototypeComponentsDir = path.join(prototypeDir, "components");
+    if (!fs.existsSync(prototypeComponentsDir)) {
+      fs.mkdirSync(prototypeComponentsDir);
+      fs.writeFileSync(path.join(prototypeComponentsDir, ".gitkeep"), "");
     }
 
     // Write common files (README.md, metadata.json, mock-data.ts)

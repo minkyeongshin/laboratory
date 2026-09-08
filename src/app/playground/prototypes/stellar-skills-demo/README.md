@@ -1,14 +1,14 @@
 ---
-title: Homepage
-description: Lab homepage redesign
+title: Stellar Skills Demo
+description: demo
 author: minkyeong
-date: 2026-05-12
+date: 2026-05-21
 status: exploring
 ---
 
 ## What this proves
 
-Lab homepage redesign
+demo
 
 ## What it doesn't cover
 

@@ -1,5 +1,5 @@
 /**
- * Mock data for Homepage prototype.
+ * Mock data for Stellar Skills Demo prototype.
  * Import types from @/types/ rather than re-declaring.
  */
 

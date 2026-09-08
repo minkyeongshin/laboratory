@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useContext, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Icon } from "@stellar/design-system";
 
@@ -8,12 +8,15 @@ import { Routes } from "@/constants/routes";
 import { NavItem } from "@/constants/navItems";
 
 import { NextLink } from "@/components/NextLink";
+import { ActiveRouteContext } from "@/components/layout/ActiveRouteContext";
 import { sanitizeArray } from "@/helpers/sanitizeArray";
 import { scrollElIntoView } from "@/helpers/scrollElIntoView";
 import { trackEvent, TrackingEvent } from "@/metrics/tracking";
 
 export const NavLink = ({ item, level }: { item: NavItem; level: number }) => {
-  const pathname = usePathname() || "";
+  const activeRouteOverride = useContext(ActiveRouteContext);
+  const currentPathname = usePathname() || "";
+  const pathname = activeRouteOverride || currentPathname;
 
   const isActive = isActivePath(pathname, item.route, level);
   const [isExpanded, setIsExpanded] = useState(isActive);

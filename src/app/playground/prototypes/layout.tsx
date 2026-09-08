@@ -7,14 +7,17 @@ import { LayoutHeader } from "@/components/layout/LayoutHeader";
 import { LayoutHeaderMinimal } from "@/components/layout/LayoutHeaderMinimal";
 import { LayoutWithSidebar } from "@/components/layout/LayoutWithSidebar";
 import { LayoutSidebarContent } from "@/components/layout/LayoutSidebarContent";
+import { ActiveRouteContext } from "@/components/layout/ActiveRouteContext";
 import { Hydration } from "@/components/Hydration";
+import { SOURCE_PAGE_MAP } from "@/constants/playgroundSourcePages";
 
-type ChromeMode = "minimal" | "full" | null;
+type ChromeMode = "none" | "minimal" | "full" | null;
 
 /**
  * Layout for prototype pages that renders Lab chrome based on prototype type.
  *
- * - Blank prototypes (chrome: "minimal"): Logo + theme + wallet only, no sidebar
+ * - None (chrome: "none"): No Lab chrome, prototype manages its own header/layout
+ * - Minimal prototypes (chrome: "minimal"): Logo + theme + wallet only, no sidebar
  * - Existing-page prototypes (chrome: "full"): Full header + sidebar
  *
  * The chrome mode is determined by reading the prototype's metadata.json file.
@@ -22,6 +25,7 @@ type ChromeMode = "minimal" | "full" | null;
 export default function PrototypesLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [chromeMode, setChromeMode] = useState<ChromeMode>(null);
+  const [activeRoute, setActiveRoute] = useState<string | null>(null);
 
   // Extract the prototype slug from the pathname
   // /playground/prototypes/my-prototype → my-prototype
@@ -33,11 +37,16 @@ export default function PrototypesLayout({ children }: { children: ReactNode }) 
       return;
     }
 
-    // Fetch metadata to determine chrome mode
+    // Fetch metadata to determine chrome mode and active route
     fetch(`/api/playground/prototype-metadata?slug=${encodeURIComponent(slug)}`)
       .then((res) => res.json())
       .then((data) => {
         setChromeMode(data.chrome || "full");
+
+        // Set active route from startedFrom field
+        if (data.startedFrom && SOURCE_PAGE_MAP[data.startedFrom]) {
+          setActiveRoute(SOURCE_PAGE_MAP[data.startedFrom].route);
+        }
       })
       .catch(() => {
         setChromeMode("full"); // Default on error
@@ -47,6 +56,11 @@ export default function PrototypesLayout({ children }: { children: ReactNode }) 
   // Show nothing while loading to prevent layout shift
   if (chromeMode === null) {
     return null;
+  }
+
+  // No chrome: prototype manages its own header/layout entirely
+  if (chromeMode === "none") {
+    return <>{children}</>;
   }
 
   // Minimal chrome: header only (no sidebar toggle, no network selector, no sidebar)
@@ -66,9 +80,11 @@ export default function PrototypesLayout({ children }: { children: ReactNode }) 
     <div className="LabLayout">
       <LayoutHeader />
       <Hydration>
-        <LayoutWithSidebar>
-          <LayoutSidebarContent>{children}</LayoutSidebarContent>
-        </LayoutWithSidebar>
+        <ActiveRouteContext.Provider value={activeRoute}>
+          <LayoutWithSidebar>
+            <LayoutSidebarContent>{children}</LayoutSidebarContent>
+          </LayoutWithSidebar>
+        </ActiveRouteContext.Provider>
       </Hydration>
     </div>
   );

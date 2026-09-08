@@ -1,0 +1,78 @@
+.CopyPill {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--sds-clr-gray-03);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  &__text {
+    font-family: var(--sds-ff-monospace);
+    color: var(--sds-clr-gray-12);
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  // Variant: pill (large, used in hero)
+  &--pill {
+    padding: 4px 8px;
+    gap: 8px;
+
+    .CopyPill__text {
+      font-size: 12px;
+    }
+
+    svg {
+      width: 12px;
+      height: 12px;
+      color: var(--sds-clr-gray-12);
+    }
+  }
+
+  // Variant: path (small, used inside cards)
+  &--path {
+    padding: 4px 8px;
+    gap: 6px;
+
+    .CopyPill__text {
+      font-size: 12px;
+    }
+
+    svg {
+      width: 12px;
+      height: 12px;
+      color: var(--sds-clr-gray-09);
+    }
+  }
+
+  // Hover state
+  @media (hover: hover) {
+    &:hover {
+      .CopyPill__text {
+        color: var(--sds-clr-lilac-11);
+      }
+
+      svg {
+        color: var(--sds-clr-lilac-11);
+      }
+    }
+  }
+
+  // Copied state
+  &[data-copied="true"] {
+    background-color: var(--sds-clr-green-03);
+
+    .CopyPill__text {
+      color: var(--sds-clr-green-11);
+    }
+
+    svg {
+      color: var(--sds-clr-green-11);
+    }
+  }
+}
