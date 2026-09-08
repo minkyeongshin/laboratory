@@ -1,13 +1,12 @@
 import { Icon, Text } from "@stellar/design-system";
 
-import { CardGrid } from "../CardGrid";
+import { NextLink } from "@/components/NextLink";
+
 import { mockExploreInspect } from "../../mock-data";
 
 import "./styles.scss";
 
-// A 20px icon above the title is what separates these cards from Start
-// building, which is title + arrow. Glyphs chosen so no two read as "code":
-// transfer, module, server, code.
+// Glyphs chosen so no two read as "code": transfer, module, server, code.
 const ICONS: Record<string, React.ReactNode> = {
   transactions: <Icon.SwitchHorizontal01 />,
   "smart-contracts": <Icon.Cube01 />,
@@ -16,26 +15,27 @@ const ICONS: Record<string, React.ReactNode> = {
 };
 
 export const ExploreInspect = () => (
-  <CardGrid columns={4} addlClassName="ExploreInspect">
+  <div className="ExploreInspect">
     {mockExploreInspect.map((item) => (
-      <CardGrid.Cell key={item.id} href={item.route}>
-        <span className="ExploreInspect__icon" aria-hidden="true">
+      // The whole item is the click target. Four identical "Explore" links
+      // carried no information, so they're gone.
+      <NextLink
+        href={item.route}
+        className="ExploreInspect__item"
+        key={item.id}
+      >
+        <span className="ExploreInspect__tile" aria-hidden="true">
           {ICONS[item.id]}
         </span>
 
-        <Text
-          as="div"
-          size="sm"
-          weight="medium"
-          addlClassName="ExploreInspect__title"
-        >
-          {item.title}
-        </Text>
-
-        <Text as="p" size="sm" addlClassName="ExploreInspect__description">
+        {/* One paragraph: bold title, period, then the description inline.
+            `as="div"` rather than `as="p"` because SDS gives every <p> a
+            24px bottom margin that would fight the spacing here. */}
+        <Text as="div" size="sm" addlClassName="ExploreInspect__body">
+          <strong className="ExploreInspect__title">{item.title}.</strong>{" "}
           {item.description}
         </Text>
-      </CardGrid.Cell>
+      </NextLink>
     ))}
-  </CardGrid>
+  </div>
 );

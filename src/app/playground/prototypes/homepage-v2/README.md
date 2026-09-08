@@ -121,6 +121,24 @@ the block reads as grouped:
 
 ## Patterns
 
+### Explore & inspect — column dividers
+
+Uses **column dividers — the same 1px `gray-06` rule as `CardGrid` — with no
+outer border.** Deliberately lighter than the action cards above it, but visibly
+the same family, so the section is anchored rather than floating between two
+bordered grids. Each item is a single link (tile + one inline paragraph); tile
+hover takes the border to `lilac-11`.
+
+The rule is a pseudo-element centred in the grid gap, not a `border-left` on the
+items. Padding the items directly leaves the two middle columns ~25px narrower
+than the outer two, which makes an even line count across the four impossible.
+With the gap approach all four columns are 203px and every description sets to
+exactly two lines.
+
+Two variants were tried. A tinted `gray-02` panel also anchored the section, but
+introduced a second surface treatment the page doesn't otherwise use and cost
+64px of height; dividers reuse a language already on the page and cost nothing.
+
 ### Suggestion chip
 
 **40px, weight 500, 8/12 padding. Intentionally NOT SDS `Button` (32/600):**

@@ -74,19 +74,21 @@ export const mockExploreInspect: LinkCard[] = [
   {
     id: "transactions",
     title: "Transactions",
-    description: "Build, simulate, sign, submit, and inspect transactions.",
+    // Trailing "transactions" dropped — the title already says it, and at the
+    // 203px column the full phrase ran to a third line.
+    description: "Build, sign, submit, and inspect.",
     route: Routes.TRANSACTION,
   },
   {
     id: "smart-contracts",
     title: "Smart contracts",
-    description: "Deploy, explore, and interact with contracts.",
+    description: "Deploy, explore, and call contracts.",
     route: Routes.SMART_CONTRACTS,
   },
   {
     id: "api-explorer",
     title: "API explorer",
-    description: "Explore Stellar RPC methods and Horizon endpoints.",
+    description: "Test Stellar RPC and Horizon endpoints.",
     route: Routes.ENDPOINTS,
   },
   {
