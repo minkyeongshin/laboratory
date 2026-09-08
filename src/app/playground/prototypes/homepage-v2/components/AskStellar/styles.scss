@@ -1,0 +1,84 @@
+@use "../../../../../../styles/utils.scss" as *;
+
+.AskStellar {
+  // Figma constrains the whole block to 560px.
+  width: 100%;
+  max-width: pxToRem(560px);
+
+  &__label {
+    display: flex;
+    align-items: center;
+    gap: pxToRem(4px);
+  }
+
+  // Off-token by design (confirmed with designer): gradient-filled label text.
+  // No SDS mechanism for this, hence background-clip rather than a colour token.
+  &__labelText {
+    font-size: pxToRem(16px);
+    line-height: pxToRem(24px);
+    font-weight: var(--sds-fw-semi-bold);
+    background-image: linear-gradient(
+      248.12deg,
+      rgb(141 124 226) 33.934%,
+      rgb(36 29 73) 155.41%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  // Off-token by design: 3px #544a89 border at a 24px radius. SDS inputs are
+  // 1px at a fixed radius and expose neither.
+  &__field {
+    display: flex;
+    align-items: center;
+    height: pxToRem(44px);
+    padding: pxToRem(8px) pxToRem(8px) pxToRem(8px) pxToRem(20px);
+    background-color: var(--sds-clr-gray-01);
+    border: 3px solid #544a89;
+    border-radius: pxToRem(24px);
+  }
+
+  &__input {
+    flex: 1 1 auto;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: pxToRem(14px);
+    line-height: pxToRem(20px);
+    color: var(--sds-clr-gray-12);
+
+    &::placeholder {
+      color: var(--sds-clr-gray-11);
+    }
+  }
+
+  &__suggestions {
+    list-style: none;
+    margin: 0;
+    // Figma insets the suggestion list 16px from the field.
+    padding: 0 0 0 pxToRem(16px);
+    display: flex;
+    flex-direction: column;
+    gap: pxToRem(12px);
+  }
+
+  &__suggestion {
+    padding-bottom: pxToRem(12px);
+    border-bottom: 1px solid var(--sds-clr-gray-06);
+    color: var(--sds-clr-gray-11);
+
+    // SDS sets `li::before { content: "-" }` on every list item under the theme
+    // class. Same suppression production uses in .BuildInfoInstructions.
+    &::before {
+      display: none;
+    }
+
+    &:last-child {
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+  }
+}

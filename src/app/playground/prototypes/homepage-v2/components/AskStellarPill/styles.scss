@@ -1,0 +1,48 @@
+@use "../../../../../../styles/utils.scss" as *;
+
+.AskStellarPill {
+  position: fixed;
+  bottom: pxToRem(24px);
+  right: pxToRem(24px);
+  // Above page content, below SDS modals and float notifications.
+  z-index: 10;
+
+  display: inline-flex;
+  align-items: center;
+  gap: pxToRem(6px);
+  height: pxToRem(32px);
+  padding: pxToRem(6px) pxToRem(12px);
+
+  background-color: var(--sds-clr-gray-01);
+  border: 1px solid var(--sds-clr-lilac-06);
+  border-radius: pxToRem(100px);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+
+  img {
+    flex-shrink: 0;
+  }
+
+  // Matches the Ask Stellar block's label. Off-token by design.
+  &__label {
+    font-size: pxToRem(14px);
+    line-height: pxToRem(20px);
+    font-weight: var(--sds-fw-medium);
+    background-image: linear-gradient(
+      248.12deg,
+      rgb(141 124 226) 33.934%,
+      rgb(36 29 73) 155.41%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    white-space: nowrap;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      border-color: var(--sds-clr-lilac-08);
+    }
+  }
+}

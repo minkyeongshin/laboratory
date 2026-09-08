@@ -1,0 +1,23 @@
+@use "../../../../../../styles/utils.scss" as *;
+
+.StartBuilding {
+  &__heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: pxToRem(8px);
+    color: var(--sds-clr-gray-12);
+    margin-bottom: pxToRem(8px);
+
+    svg {
+      flex-shrink: 0;
+      width: pxToRem(16px);
+      height: pxToRem(16px);
+      color: var(--sds-clr-gray-12);
+    }
+  }
+
+  &__description {
+    color: var(--sds-clr-gray-11);
+  }
+}

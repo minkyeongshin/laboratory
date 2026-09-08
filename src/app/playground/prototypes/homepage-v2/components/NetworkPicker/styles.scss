@@ -1,0 +1,32 @@
+@use "../../../../../../styles/utils.scss" as *;
+
+.NetworkPicker {
+  &__description {
+    color: var(--sds-clr-gray-11);
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: pxToRem(8px);
+    // Pin the action row to the bottom so all three cards align regardless of
+    // description length.
+    margin-top: auto;
+    padding-top: pxToRem(16px);
+  }
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: pxToRem(6px);
+    color: var(--sds-clr-green-11);
+    // Match the 32px button height so the active card doesn't shift.
+    min-height: pxToRem(32px);
+
+    svg {
+      flex-shrink: 0;
+      width: pxToRem(14px);
+      height: pxToRem(14px);
+    }
+  }
+}

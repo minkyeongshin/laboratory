@@ -1,0 +1,25 @@
+@use "../../../../../../styles/utils.scss" as *;
+
+.ExploreInspect {
+  .CardGrid__cell {
+    color: var(--sds-clr-gray-12);
+  }
+
+  &__image {
+    // Figma: 76x70 illustration, then 82px down to the title block.
+    width: pxToRem(76px);
+    height: pxToRem(70px);
+    margin-bottom: pxToRem(12px);
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  &__description {
+    color: var(--sds-clr-gray-11);
+    margin-top: pxToRem(6px);
+  }
+}

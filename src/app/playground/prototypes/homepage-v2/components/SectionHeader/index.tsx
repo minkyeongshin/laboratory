@@ -22,7 +22,7 @@ export const SectionHeader = ({
   description?: string;
 }) => (
   <Box gap="xs" addlClassName="SectionHeader">
-    <Text as="h2" size="md" weight="semi-bold">
+    <Text as="h2" size="md" weight="medium">
       {title}
     </Text>
 

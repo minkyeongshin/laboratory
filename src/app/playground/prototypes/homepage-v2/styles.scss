@@ -6,14 +6,6 @@
   max-width: pxToRem(960px);
   padding-top: pxToRem(112px);
 
-  // Skeleton-stage only. Removed once every section has landed.
-  &__placeholder {
-    color: var(--sds-clr-gray-11);
-    border: 1px dashed var(--sds-clr-gray-07);
-    border-radius: pxToRem(4px);
-    padding: pxToRem(8px) pxToRem(12px);
-  }
-
   &__footer {
     padding-top: pxToRem(64px);
     color: var(--sds-clr-gray-11);

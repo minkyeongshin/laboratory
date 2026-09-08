@@ -1,0 +1,13 @@
+@use "../../../../../../styles/utils.scss" as *;
+
+.Hero {
+  h1 {
+    color: var(--sds-clr-gray-12);
+  }
+
+  &__subtitle {
+    // Figma constrains the subtitle to 585px so it wraps to two lines.
+    max-width: pxToRem(585px);
+    color: var(--sds-clr-gray-11);
+  }
+}
