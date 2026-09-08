@@ -32,6 +32,7 @@
   &__field {
     display: flex;
     align-items: center;
+    gap: pxToRem(8px);
     height: pxToRem(44px);
     padding: pxToRem(8px) pxToRem(8px) pxToRem(8px) pxToRem(20px);
     background-color: var(--sds-clr-gray-01);
@@ -79,6 +80,33 @@
     &:last-child {
       padding-bottom: 0;
       border-bottom: none;
+    }
+  }
+
+  // A real button, not a link: clicking opens the panel rather than navigating.
+  // SDS <Button> is not used because its chrome (background, border, fixed
+  // height) would fight a hairline-separated text row.
+  &__suggestionButton {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    // The export has no hover state; per the designer, gray-02. Negative insets
+    // let the tint extend past the text without shifting the row.
+    padding: pxToRem(4px) pxToRem(8px);
+    margin: pxToRem(-4px) pxToRem(-8px);
+    border-radius: pxToRem(4px);
+    transition: background-color 0.15s ease;
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--sds-clr-gray-02);
+        color: var(--sds-clr-gray-12);
+      }
     }
   }
 }

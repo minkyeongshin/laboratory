@@ -1,0 +1,178 @@
+@use "../../../../../../styles/utils.scss" as *;
+
+.AskStellarPanel {
+  position: fixed;
+  bottom: pxToRem(24px);
+  right: pxToRem(24px);
+  // Above page content, below SDS modals and float notifications.
+  z-index: 10;
+
+  display: flex;
+  flex-direction: column;
+  width: pxToRem(414px);
+  height: pxToRem(640px);
+  max-height: calc(100vh - #{pxToRem(48px)});
+
+  background-color: var(--sds-clr-gray-01);
+  border: 1px solid var(--sds-clr-gray-06);
+  // Off-token: SDS exposes no radius or shadow tokens. Values from the export.
+  border-radius: pxToRem(24px);
+  box-shadow: 0 pxToRem(4px) pxToRem(10px) rgb(0 0 0 / 25%);
+  overflow: hidden;
+
+  &:focus {
+    outline: none;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    padding: pxToRem(24px);
+    border-bottom: 1px solid var(--sds-clr-gray-06);
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: pxToRem(4px);
+  }
+
+  // Same fixed gradient as the Ask Stellar block on the page, kept for
+  // consistency. Off-token by design, and carries the same dark-mode
+  // legibility problem recorded in the README.
+  &__titleText {
+    font-size: pxToRem(18px);
+    line-height: pxToRem(26px);
+    font-weight: var(--sds-fw-medium);
+    background-image: linear-gradient(
+      247.9deg,
+      rgb(141 124 226) 33.934%,
+      rgb(36 29 73) 155.41%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  // 28px square button used by both the header close and the composer send.
+  &__iconButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: pxToRem(28px);
+    height: pxToRem(28px);
+    background-color: var(--sds-clr-gray-01);
+    border: 1px solid var(--sds-clr-gray-06);
+    border-radius: pxToRem(4px);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    svg {
+      width: pxToRem(12px);
+      height: pxToRem(12px);
+      color: var(--sds-clr-gray-11);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    @media (hover: hover) {
+      &:not(:disabled):hover {
+        background-color: var(--sds-clr-gray-03);
+      }
+    }
+  }
+
+  &__messages {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    // Symmetric, per the designer: the export's narrower 331px message column
+    // is an auto-layout artifact and the Figma file is being corrected.
+    padding: pxToRem(24px);
+    display: flex;
+    flex-direction: column;
+    gap: pxToRem(16px);
+  }
+
+  &__exchange {
+    display: flex;
+    flex-direction: column;
+    gap: pxToRem(16px);
+  }
+
+  &__bubble {
+    padding: pxToRem(8px) pxToRem(12px);
+    border-radius: pxToRem(16px);
+    color: var(--sds-clr-gray-12);
+    // Preserve the reply's line breaks.
+    white-space: pre-wrap;
+
+    &[data-from="user"] {
+      align-self: flex-end;
+      max-width: 85%;
+      background-color: var(--sds-clr-lilac-03);
+      text-align: center;
+    }
+
+    &[data-from="assistant"] {
+      align-self: stretch;
+      background-color: var(--sds-clr-gray-03);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: pxToRem(8px);
+  }
+
+  &__composer {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: pxToRem(8px);
+    margin: 0 pxToRem(24px) pxToRem(24px);
+    padding: pxToRem(16px);
+    min-height: pxToRem(82px);
+    background-color: var(--sds-clr-gray-01);
+    border: 1px solid var(--sds-clr-gray-06);
+    border-radius: pxToRem(16px);
+
+    // Send button sits bottom-right inside the box.
+    .AskStellarPanel__iconButton {
+      align-self: flex-end;
+      margin-top: auto;
+    }
+  }
+
+  &__composerInput {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: pxToRem(14px);
+    line-height: pxToRem(20px);
+    color: var(--sds-clr-gray-12);
+
+    &::placeholder {
+      color: var(--sds-clr-gray-11);
+    }
+  }
+
+  // TODO(responsive): desktop-only, like the rest of the prototype. Below this
+  // the fixed panel would cover the page, so it goes full-bleed with insets.
+  @media screen and (max-width: 560px) {
+    width: auto;
+    left: pxToRem(16px);
+    right: pxToRem(16px);
+    bottom: pxToRem(16px);
+  }
+}

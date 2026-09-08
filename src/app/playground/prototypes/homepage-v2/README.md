@@ -23,9 +23,13 @@ Built from Figma node `9477:68721`.
 
 **Nothing is wired up.**
 
-- **Ask Stellar has no behaviour.** The field does not submit, the suggestions
-  do not route, and no results surface. It is a visual target for the
-  interaction, not the interaction.
+- **Ask Stellar answers, but there is no API.** The input, the suggestion rows,
+  and the panel's own composer all work — they open the panel and append user
+  bubbles — but **every question returns the same canned deploy-contract
+  reply**, taken from the Figma frame. Multi-turn is visual only: no request is
+  made, nothing is streamed, and the answer ignores what was asked. It will
+  read as obviously wrong for "Explain an XDR", which is expected.
+- **The conversation is not persisted.** Closing the panel discards it.
 - **The floating Ask Stellar pill is not on the home page.** Both the Ask
   Stellar input and the suggestion rows open the chat panel, which made the
   pill redundant here. `components/AskStellarPill/` is kept for use on other
@@ -82,6 +86,18 @@ Per `rules/02-styling.md`, gaps flagged rather than worked around:
 - **No borderless button variant.** All six SDS `Button` variants set
   `--Button-color-border-default`, so "View all tutorials" neutralises the
   border and background variables locally rather than rebuilding the button.
+- **No shadow or radius tokens in SDS.** The Ask Stellar panel's
+  `0 4px 10px rgb(0 0 0 / 25%)` shadow and its 24px/16px/4px radii are local
+  `pxToRem` values.
+- **`white` is not a safe literal.** The panel composer reads as `bg-white` in
+  the export, but `--sds-clr-base-00` is theme-aware and flips to `#000000` in
+  dark mode. Used `gray-01` instead — indistinguishable in light, correct in
+  dark.
+
+The panel's colours are otherwise all tokens: user bubble `lilac-03`
+(`#f5f2ff`), assistant bubble `gray-03`, and both action buttons are plain SDS
+`Button` at `size="md"` — `variant="secondary"` and `variant="tertiary"` match
+the export's fills, borders, and metrics with no overrides.
 - **Border radii and card padding** (6px, 24px, 4px) have no SDS token and live
   in local SCSS via `pxToRem`.
 

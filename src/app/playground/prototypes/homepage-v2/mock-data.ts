@@ -175,3 +175,37 @@ export const mockAskStellarSuggestions = [
   "Explain an XDR",
   "Debug a transaction",
 ];
+
+/**
+ * The single canned assistant reply, taken from the Figma frame's
+ * deploy-contract conversation. Every question gets this answer — the panel is
+ * a visual prototype with no API behind it, so the response does not vary.
+ */
+export const mockAskStellarReply = [
+  "Deploy a smart contract on Stellar, first compile your contract into a WASM file.",
+  "Then create a deployment transaction and simulate it to check for errors.",
+  "Review the transaction details, including the network, contract ID, and required auth.",
+  "Sign and submit the transaction with your connected wallet to deploy the contract.",
+  "After deployment, you can invoke functions, inspect events, and start testing interactions.",
+].join("\n");
+
+export const mockAskStellarActions: {
+  id: string;
+  label: string;
+  variant: "secondary" | "tertiary";
+  route?: string;
+  url?: string;
+}[] = [
+  {
+    id: "deploy",
+    label: "Deploy contract",
+    variant: "secondary",
+    route: Routes.SMART_CONTRACTS_DEPLOY_CONTRACT,
+  },
+  {
+    id: "docs",
+    label: "Developer docs",
+    variant: "tertiary",
+    url: "https://developers.stellar.org/",
+  },
+];

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Logo } from "@stellar/design-system";
 
 import { SdsLink } from "@/components/SdsLink";
@@ -8,6 +9,7 @@ import { GITHUB_URL } from "@/constants/settings";
 import { useStore } from "@/store/useStore";
 
 import { AskStellar } from "./components/AskStellar";
+import { AskStellarPanel } from "./components/AskStellarPanel";
 import { ExploreInspect } from "./components/ExploreInspect";
 import { Hero } from "./components/Hero";
 import { LearnByBuilding } from "./components/LearnByBuilding";
@@ -30,12 +32,18 @@ export default function HomepageV2() {
   // exist yet and resolve to the light files — see mock-data.ts.
   const imgTheme = theme === "sds-theme-light" ? "light" : "dark";
 
+  // Ask Stellar conversation. `null` means the panel is closed; otherwise it
+  // holds the user's messages, oldest first. Lives here because both the input
+  // and the panel need it, and it's prototype-local UI state — nothing the
+  // querystring store should carry.
+  const [askMessages, setAskMessages] = useState<string[] | null>(null);
+
   return (
     <div className="HomeV2">
       <Box gap="custom" customValue="48px" addlClassName="HomeV2__column">
         <Hero />
 
-        <AskStellar />
+        <AskStellar onSubmit={(query) => setAskMessages([query])} />
 
         <Box gap="custom" customValue="40px">
           <Box gap="custom" customValue="16px">
@@ -69,6 +77,14 @@ export default function HomepageV2() {
           </Box>
         </Box>
       </Box>
+
+      {askMessages ? (
+        <AskStellarPanel
+          messages={askMessages}
+          onSend={(text) => setAskMessages((prev) => [...(prev ?? []), text])}
+          onClose={() => setAskMessages(null)}
+        />
+      ) : null}
 
       {/*
         Footer. Copied verbatim from src/app/page.tsx — there is no shared
