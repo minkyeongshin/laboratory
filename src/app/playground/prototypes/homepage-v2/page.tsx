@@ -8,7 +8,6 @@ import { GITHUB_URL } from "@/constants/settings";
 import { useStore } from "@/store/useStore";
 
 import { AskStellar } from "./components/AskStellar";
-import { AskStellarPill } from "./components/AskStellarPill";
 import { ExploreInspect } from "./components/ExploreInspect";
 import { Hero } from "./components/Hero";
 import { LearnByBuilding } from "./components/LearnByBuilding";
@@ -70,8 +69,6 @@ export default function HomepageV2() {
           </Box>
         </Box>
       </Box>
-
-      <AskStellarPill />
 
       {/*
         Footer. Copied verbatim from src/app/page.tsx — there is no shared

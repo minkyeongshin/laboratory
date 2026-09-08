@@ -26,7 +26,10 @@ Built from Figma node `9477:68721`.
 - **Ask Stellar has no behaviour.** The field does not submit, the suggestions
   do not route, and no results surface. It is a visual target for the
   interaction, not the interaction.
-- **The floating Ask Stellar pill has no behaviour** either.
+- **The floating Ask Stellar pill is not on the home page.** Both the Ask
+  Stellar input and the suggestion rows open the chat panel, which made the
+  pill redundant here. `components/AskStellarPill/` is kept for use on other
+  pages, and still has no behaviour of its own.
 - **Network switching is a no-op.** The active network is read from the real
   store (so the "You're on X" state is genuine), but the Switch buttons do
   nothing. Production's switch-confirmation modal is gone from the design with

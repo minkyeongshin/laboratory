@@ -4,16 +4,15 @@ import { Box } from "@/components/layout/Box";
 import "./styles.scss";
 
 // Heading rather than Display: the two share identical CSS in SDS
-// (.Display--md and .Heading--md), but this is the page's h1 and Display only
+// (.Display--sm and .Heading--sm), but this is the page's h1 and Display only
 // renders div/span.
 //
-// size="md" weight="medium" needs no overrides — SDS gives 2.5rem/3rem (40/48)
-// and letter-spacing: calc(font-size * .04 * -1) = -1.6px, which is exactly the
-// Figma spec.
+// size="sm" is 2rem/2.5rem (32/40) with letter-spacing
+// calc(font-size * .04 * -1) = -1.28px, applied by SDS with no overrides.
 
 export const Hero = () => (
   <Box gap="custom" customValue="24px" addlClassName="Hero">
-    <Heading as="h1" size="md" weight="medium">
+    <Heading as="h1" size="sm" weight="medium">
       {/* The design breaks the line before the em dash rather than letting it
           wrap naturally, so the break is explicit. */}
       Simulate, analyze, and explore
