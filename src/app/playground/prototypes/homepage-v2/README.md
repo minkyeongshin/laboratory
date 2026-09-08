@@ -123,21 +123,40 @@ the block reads as grouped:
 
 ### Explore & inspect — column dividers
 
-Uses **column dividers — the same 1px `gray-06` rule as `CardGrid` — with no
-outer border.** Deliberately lighter than the action cards above it, but visibly
-the same family, so the section is anchored rather than floating between two
-bordered grids. Each item is a single link (tile + one inline paragraph); tile
-hover takes the border to `lilac-11`.
+Uses **`CardGrid variant="open"` — one component, two densities.** Same column
+math, 1px `gray-06` gap dividers and 24px cell padding as the Start building
+row, without the outer border and radius. Deliberately lighter than the action
+cards above it, but visibly the same family, so the section is anchored rather
+than floating between two bordered grids. Each cell is a single link (tile + one
+inline paragraph); tile hover takes the border to `lilac-11`.
 
-The rule is a pseudo-element centred in the grid gap, not a `border-left` on the
-items. Padding the items directly leaves the two middle columns ~25px narrower
-than the outer two, which makes an even line count across the four impossible.
-With the gap approach all four columns are 203px and every description sets to
-exactly two lines.
+The open variant keeps its border at **1px transparent** rather than removing
+it, so the column math and the 24px content inset stay identical to the bordered
+variant — that is what lands both rows on the same left edge (measured: Explore
+tile left = Start building card text left = 413px, exactly). `background-clip:
+padding-box` keeps the `gray-06` fill off that transparent border so it shows
+only through the column gaps.
 
-Two variants were tried. A tinted `gray-02` panel also anchored the section, but
-introduced a second surface treatment the page doesn't otherwise use and cost
-64px of height; dividers reuse a language already on the page and cost nothing.
+An earlier version reimplemented the dividers locally as pseudo-elements in the
+grid gap. That worked, but duplicated `CardGrid` and left the tiles flush with
+the section title while the cards' text was inset 24px. Reusing `CardGrid`
+removed the duplication and fixed the inset in one move.
+
+Section spacing matches Start building exactly — 16px from the section title to
+the content in both, so the two rows share a rhythm despite the different
+treatment. (Measured: 16px box-to-box, 19px from the title's text baseline.)
+
+**Two variants were tried.**
+
+- **A — tinted panel.** `gray-02` field, radius 16, padding 32, no border, with
+  the tiles kept `gray-01` so they lift off it. **Rejected:** it anchored the
+  section, but introduced a second surface treatment the page doesn't otherwise
+  use — every other block is either a bordered `gray-01` card or plain page —
+  and it cost 64px of height while narrowing the columns to 200px.
+- **B — column dividers.** *Chosen,* because it reuses the `CardGrid` rule
+  rather than inventing a new surface. The section is anchored by a language
+  already on the page, adds no height, and gives the widest columns of any
+  option tried.
 
 ### Suggestion chip
 

@@ -17,6 +17,17 @@
     --CardGrid-columns: 3;
   }
 
+  // Open variant: no visible outer border or radius, but the border is kept at
+  // 1px transparent so the column math and the 24px content inset are identical
+  // to the bordered variant — that's what lines the two rows up on the same
+  // left edge. background-clip keeps the gray-06 fill off the transparent
+  // border, so it shows only through the 1px column gaps.
+  &[data-variant="open"] {
+    border-color: transparent;
+    border-radius: 0;
+    background-clip: padding-box;
+  }
+
   &__cell {
     display: flex;
     flex-direction: column;

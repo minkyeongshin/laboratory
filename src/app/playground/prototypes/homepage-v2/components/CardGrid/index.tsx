@@ -20,6 +20,12 @@ import "./styles.scss";
 type CardGridProps = {
   /** Number of columns at full width. Collapses to 2, then 1. */
   columns: 3 | 4;
+  /**
+   * "bordered" is the boxed card row. "open" drops the outer border and radius
+   * but keeps identical column math, dividers and 24px cell padding — one
+   * component at two densities.
+   */
+  variant?: "bordered" | "open";
   children: React.ReactNode;
   addlClassName?: string;
 };
@@ -47,10 +53,15 @@ const CardGridCell = ({ children, addlClassName, href }: CardGridCellProps) => {
 
 export const CardGrid = ({
   columns,
+  variant = "bordered",
   children,
   addlClassName,
 }: CardGridProps) => (
-  <div className={`CardGrid ${addlClassName ?? ""}`} data-columns={columns}>
+  <div
+    className={`CardGrid ${addlClassName ?? ""}`}
+    data-columns={columns}
+    data-variant={variant}
+  >
     {children}
   </div>
 );

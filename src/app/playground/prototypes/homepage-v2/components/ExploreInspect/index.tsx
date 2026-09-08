@@ -1,7 +1,6 @@
 import { Icon, Text } from "@stellar/design-system";
 
-import { NextLink } from "@/components/NextLink";
-
+import { CardGrid } from "../CardGrid";
 import { mockExploreInspect } from "../../mock-data";
 
 import "./styles.scss";
@@ -15,15 +14,14 @@ const ICONS: Record<string, React.ReactNode> = {
 };
 
 export const ExploreInspect = () => (
-  <div className="ExploreInspect">
+  // CardGrid variant="open": same column math, dividers and 24px inset as the
+  // Start building row, without the outer box. The dividers and the content
+  // inset come from CardGrid rather than being reimplemented here.
+  <CardGrid columns={4} variant="open" addlClassName="ExploreInspect">
     {mockExploreInspect.map((item) => (
-      // The whole item is the click target. Four identical "Explore" links
+      // The whole cell is the click target. Four identical "Explore" links
       // carried no information, so they're gone.
-      <NextLink
-        href={item.route}
-        className="ExploreInspect__item"
-        key={item.id}
-      >
+      <CardGrid.Cell key={item.id} href={item.route}>
         <span className="ExploreInspect__tile" aria-hidden="true">
           {ICONS[item.id]}
         </span>
@@ -35,7 +33,7 @@ export const ExploreInspect = () => (
           <strong className="ExploreInspect__title">{item.title}.</strong>{" "}
           {item.description}
         </Text>
-      </NextLink>
+      </CardGrid.Cell>
     ))}
-  </div>
+  </CardGrid>
 );

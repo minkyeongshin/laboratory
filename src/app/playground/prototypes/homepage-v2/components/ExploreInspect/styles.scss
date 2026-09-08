@@ -1,44 +1,8 @@
 @use "../../../../../../styles/utils.scss" as *;
 
-// Column dividers, no outer border: the same 1px gray-06 rule the CardGrid uses
-// for its cell dividers, so this section reads as the same family as the action
-// cards above while staying deliberately lighter.
-//
-// The rule lives in the grid gap as a pseudo-element rather than as a
-// border-left on the items. Padding the items directly would leave the two
-// middle columns ~25px narrower than the outer two, which makes an even line
-// count across the four impossible.
+// Layout, dividers and the 24px content inset all come from CardGrid
+// variant="open". Only the tile and the inline paragraph are local.
 .ExploreInspect {
-  --ExploreInspect-columns: 4;
-  // 24px + the 1px rule + 24px.
-  --ExploreInspect-gap: #{pxToRem(49px)};
-
-  display: grid;
-  grid-template-columns: repeat(var(--ExploreInspect-columns), 1fr);
-  column-gap: var(--ExploreInspect-gap);
-  row-gap: pxToRem(40px);
-
-  &__item {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    // The whole item is the link.
-    color: inherit;
-    text-decoration: none;
-
-    // Divider, centred in the gap to the item's left.
-    & + &::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: calc((var(--ExploreInspect-gap) / 2 + 0.5px) * -1);
-      width: 1px;
-      background-color: var(--sds-clr-gray-06);
-    }
-  }
-
   &__tile {
     display: flex;
     align-items: center;
@@ -72,16 +36,8 @@
   }
 
   @media (hover: hover) {
-    &__item:hover .ExploreInspect__tile {
+    .CardGrid__cell:hover &__tile {
       border-color: var(--sds-clr-lilac-11);
     }
-  }
-
-  @media screen and (max-width: 900px) {
-    --ExploreInspect-columns: 2;
-  }
-
-  @media screen and (max-width: 560px) {
-    --ExploreInspect-columns: 1;
   }
 }
