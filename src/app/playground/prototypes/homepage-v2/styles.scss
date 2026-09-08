@@ -14,6 +14,13 @@
 // currently bound to — the Figma file is being updated to match.
 .LabLayout__container:has(.HomeV2) {
   background-color: var(--sds-clr-gray-01);
+
+  // The export's footer is flush with the bottom of the content frame. The
+  // container's own 32px padding-bottom is the only thing below the footer
+  // (measured: .HomeV2, .LabLayout__content and the footer's margin all
+  // contribute 0), so it goes. The footer keeps its own 24px of internal
+  // bottom padding, which is the export's py-[24px].
+  padding-bottom: 0;
 }
 
 .HomeV2 {
