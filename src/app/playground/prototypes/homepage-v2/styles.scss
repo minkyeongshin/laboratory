@@ -1,0 +1,27 @@
+@use "../../../../styles/utils.scss" as *;
+
+.HomeV2 {
+  // Figma: 960px content column inside the 1144px content frame.
+  width: 100%;
+  max-width: pxToRem(960px);
+  padding-top: pxToRem(112px);
+
+  // Skeleton-stage only. Removed once every section has landed.
+  &__placeholder {
+    color: var(--sds-clr-gray-11);
+    border: 1px dashed var(--sds-clr-gray-07);
+    border-radius: pxToRem(4px);
+    padding: pxToRem(8px) pxToRem(12px);
+  }
+
+  &__footer {
+    padding-top: pxToRem(64px);
+    color: var(--sds-clr-gray-11);
+    font-size: pxToRem(12px);
+    line-height: pxToRem(18px);
+  }
+
+  @media screen and (max-width: 1100px) {
+    padding-top: pxToRem(48px);
+  }
+}

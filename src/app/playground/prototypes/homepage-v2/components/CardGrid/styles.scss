@@ -1,0 +1,60 @@
+@use "../../../../../../styles/utils.scss" as *;
+
+.CardGrid {
+  --CardGrid-columns: 4;
+
+  display: grid;
+  grid-template-columns: repeat(var(--CardGrid-columns), 1fr);
+  // The gap IS the divider: the container paints the border colour and cells
+  // paint over it, leaving 1px hairlines between cells.
+  gap: 1px;
+  background-color: var(--sds-clr-gray-06);
+  border: 1px solid var(--sds-clr-gray-06);
+  border-radius: pxToRem(6px);
+  overflow: hidden;
+
+  &[data-columns="3"] {
+    --CardGrid-columns: 3;
+  }
+
+  &__cell {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--sds-clr-gray-01);
+    padding: pxToRem(24px);
+    // Cells in a row must match height for the dividers to run full-bleed.
+    height: 100%;
+  }
+
+  // Cells rendered as links: strip the anchor defaults, keep the card shape.
+  &__cell[data-is-link="true"] {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--sds-clr-gray-02);
+      }
+    }
+  }
+
+  // TODO(responsive): 4->2->1 and 3->2->1 are invented. The Figma is
+  // desktop-only at 1440 and has no breakpoints. Needs design input.
+  @media screen and (max-width: 900px) {
+    --CardGrid-columns: 2;
+
+    &[data-columns="3"] {
+      --CardGrid-columns: 2;
+    }
+  }
+
+  @media screen and (max-width: 560px) {
+    --CardGrid-columns: 1;
+
+    &[data-columns="3"] {
+      --CardGrid-columns: 1;
+    }
+  }
+}
