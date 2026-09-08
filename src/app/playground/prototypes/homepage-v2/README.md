@@ -31,11 +31,19 @@ Built from Figma node `9477:68721`.
   in `mock-data.ts`. **Anything typed freehand falls back to the deploy reply**,
   so a typed question will usually be answered off-topic. Nothing is requested
   or streamed, and multi-turn is visual only.
-- **The conversation is not persisted.** Closing the panel discards it.
-- **The floating Ask Stellar pill is not on the home page.** Both the Ask
-  Stellar input and the suggestion rows open the chat panel, which made the
-  pill redundant here. `components/AskStellarPill/` is kept for use on other
-  pages, and still has no behaviour of its own.
+The panel minimises rather than closing. Conversation and visibility are
+separate pieces of state, so:
+
+- No conversation yet → no pill, no panel.
+- First question → panel opens and the pill appears beneath it.
+- Close X or Escape → panel hides, messages kept, pill stays.
+- Pill → toggles the panel back open with history intact.
+
+The pill is visible whenever a conversation exists, including while the panel
+is open, which is how the Figma frame shows it.
+- **The conversation only lives for the session.** Closing the panel minimises
+  it — messages are kept and the pill reopens them — but a reload starts over.
+  Nothing is persisted to storage or the querystring.
 - **Network switching is a no-op.** The active network is read from the real
   store (so the "You're on X" state is genuine), but the Switch buttons do
   nothing. Production's switch-confirmation modal is gone from the design with

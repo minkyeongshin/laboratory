@@ -2,7 +2,11 @@
 
 .AskStellarPanel {
   position: fixed;
-  bottom: pxToRem(24px);
+  // Clears the pill below it: 24px inset + the pill's 32px + a 12px gap. The
+  // pill is always present while the panel is open, since both appear once a
+  // conversation exists. Matches the Figma frame, where the pill sits ~13px
+  // under the panel and shares its right edge.
+  bottom: pxToRem(68px);
   right: pxToRem(24px);
   // Above page content, below SDS modals and float notifications.
   z-index: 10;
@@ -11,7 +15,7 @@
   flex-direction: column;
   width: pxToRem(414px);
   height: pxToRem(640px);
-  max-height: calc(100vh - #{pxToRem(48px)});
+  max-height: calc(100vh - #{pxToRem(92px)});
 
   background-color: var(--sds-clr-gray-01);
   border: 1px solid var(--sds-clr-gray-06);
@@ -173,6 +177,6 @@
     width: auto;
     left: pxToRem(16px);
     right: pxToRem(16px);
-    bottom: pxToRem(16px);
+    bottom: pxToRem(60px);
   }
 }

@@ -10,6 +10,7 @@ import { useStore } from "@/store/useStore";
 
 import { AskStellar } from "./components/AskStellar";
 import { AskStellarPanel } from "./components/AskStellarPanel";
+import { AskStellarPill } from "./components/AskStellarPill";
 import { ExploreInspect } from "./components/ExploreInspect";
 import { Hero } from "./components/Hero";
 import { LearnByBuilding } from "./components/LearnByBuilding";
@@ -32,18 +33,27 @@ export default function HomepageV2() {
   // exist yet and resolve to the light files — see mock-data.ts.
   const imgTheme = theme === "sds-theme-light" ? "light" : "dark";
 
-  // Ask Stellar conversation. `null` means the panel is closed; otherwise it
-  // holds the user's messages, oldest first. Lives here because both the input
-  // and the panel need it, and it's prototype-local UI state — nothing the
-  // querystring store should carry.
-  const [askMessages, setAskMessages] = useState<string[] | null>(null);
+  // Ask Stellar. Conversation and visibility are separate so that closing the
+  // panel minimises it rather than destroying the history: `askMessages`
+  // survives, `isAskOpen` toggles. Once there is at least one exchange the pill
+  // stays for the rest of the session as the minimised state.
+  //
+  // Lives here because the input, the panel, and the pill all need it, and it's
+  // prototype-local UI state — nothing the querystring store should carry.
+  const [askMessages, setAskMessages] = useState<string[]>([]);
+  const [isAskOpen, setIsAskOpen] = useState(false);
+
+  const askStellar = (query: string) => {
+    setAskMessages((prev) => [...prev, query]);
+    setIsAskOpen(true);
+  };
 
   return (
     <div className="HomeV2">
       <Box gap="custom" customValue="48px" addlClassName="HomeV2__column">
         <Hero />
 
-        <AskStellar onSubmit={(query) => setAskMessages([query])} />
+        <AskStellar onSubmit={askStellar} />
 
         <Box gap="custom" customValue="40px">
           <Box gap="custom" customValue="16px">
@@ -78,11 +88,19 @@ export default function HomepageV2() {
         </Box>
       </Box>
 
-      {askMessages ? (
+      {isAskOpen ? (
         <AskStellarPanel
           messages={askMessages}
-          onSend={(text) => setAskMessages((prev) => [...(prev ?? []), text])}
-          onClose={() => setAskMessages(null)}
+          onSend={askStellar}
+          onClose={() => setIsAskOpen(false)}
+        />
+      ) : null}
+
+      {/* Minimised state. Appears with the first exchange and stays. */}
+      {askMessages.length > 0 ? (
+        <AskStellarPill
+          isPanelOpen={isAskOpen}
+          onClick={() => setIsAskOpen((open) => !open)}
         />
       ) : null}
 
