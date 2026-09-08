@@ -81,6 +81,34 @@ is open, which is how the Figma frame shows it.
 The slider and the Resources block (YouTube, Discord, Stellar Quest, X,
 Developer Docs) are gone with no replacement slot, per design direction.
 
+## Type ladder
+
+A designer decision, applied everywhere. All SDS sizes, no overrides.
+**Two body sizes total: 14px for anything you read, 12px for meta.**
+
+| Role | Size | Weight | Colour |
+|---|---|---|---|
+| Page h1 | `Heading size="sm"` (32/40) | medium | gray-12 |
+| Hero subtitle | `Text size="md"` (16/24) | regular | gray-11 |
+| Section title | `Text size="lg"` (18/26) | medium | gray-12 |
+| Section description | `Text size="sm"` (14) | regular | gray-11 |
+| Card title — *every* section | `Text size="sm"` (14) | medium | gray-12 |
+| Card description — *every* section | `Text size="sm"` (14) | regular | gray-11 |
+| Meta — footer, commit hash, "You're on X" | `Text size="xs"` (12) | — | gray-11 |
+
+**Inside a card, gray-12 is the title only.** Every description and secondary
+line is gray-11, in all sections. This was previously wrong in Explore & inspect
+and Learn by building: both set `color: gray-12` on the whole `.CardGrid__cell`,
+which inherited down onto the descriptions. Colour the title element, never the
+cell — the components now carry explicit `__title` classes so the rule holds
+structurally instead of relying on an override.
+
+The h1's top edge aligns with the sidebar's first item ("Saved"), so the two
+columns start on the same line. That needed the shared container's 32px top
+padding zeroed for this prototype — 32px alone already pushed the h1 past the
+target, so the offset could not be reached from the column. `__column` then
+carries the whole 29px.
+
 ## Design system notes
 
 Per `rules/02-styling.md`, gaps flagged rather than worked around:

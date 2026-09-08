@@ -36,7 +36,12 @@ export const LearnByBuilding = ({ imgTheme }: { imgTheme: ImgTheme }) => (
             </span>
           </NextLink>
 
-          <Text as="div" size="md" weight="medium">
+          <Text
+            as="div"
+            size="sm"
+            weight="medium"
+            addlClassName="LearnByBuilding__title"
+          >
             {item.title}
           </Text>
 

@@ -21,6 +21,11 @@
   // contribute 0), so it goes. The footer keeps its own 24px of internal
   // bottom padding, which is the export's py-[24px].
   padding-bottom: 0;
+
+  // Zeroed so the column controls the top offset outright. The sidebar's first
+  // item sits 30px below the header, and the container's 32px alone already
+  // pushed the h1 past that, making the target unreachable from the column.
+  padding-top: 0;
 }
 
 .HomeV2 {
@@ -33,8 +38,10 @@
     width: 100%;
     max-width: pxToRem(960px);
     margin: 0 auto;
-    // 80 + the container's 32px = the export's 112px from the header.
-    padding-top: pxToRem(80px);
+    // Aligns the h1's text top with the sidebar's first item ("Saved"), which
+    // sits 30px below the header. The container's top padding is zeroed above,
+    // so this is the whole offset; 1px comes off for the h1's half-leading.
+    padding-top: pxToRem(29px);
   }
 
   // Full width of the content area, not the 960 column. The export's footer is

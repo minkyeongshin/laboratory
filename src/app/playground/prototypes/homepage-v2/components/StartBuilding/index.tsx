@@ -18,7 +18,7 @@ export const StartBuilding = () => (
           <Icon.ArrowRight />
         </div>
 
-        <Text as="p" size="xs" addlClassName="StartBuilding__description">
+        <Text as="p" size="sm" addlClassName="StartBuilding__description">
           {item.description}
         </Text>
       </CardGrid.Cell>

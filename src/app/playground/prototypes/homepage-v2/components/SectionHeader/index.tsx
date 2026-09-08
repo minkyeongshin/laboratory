@@ -22,12 +22,12 @@ export const SectionHeader = ({
   description?: string;
 }) => (
   <Box gap="xs" addlClassName="SectionHeader">
-    <Text as="h2" size="md" weight="medium">
+    <Text as="h2" size="lg" weight="medium">
       {title}
     </Text>
 
     {description ? (
-      <Text as="p" size="xs" addlClassName="SectionHeader__description">
+      <Text as="p" size="sm" addlClassName="SectionHeader__description">
         {description}
       </Text>
     ) : null}

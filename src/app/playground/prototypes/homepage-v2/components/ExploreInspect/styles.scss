@@ -1,8 +1,21 @@
 @use "../../../../../../styles/utils.scss" as *;
 
 .ExploreInspect {
-  .CardGrid__cell {
+  // Inside a card, gray-12 is the title only — colour the title, never the
+  // cell, or it inherits down onto the description too.
+  &__title {
     color: var(--sds-clr-gray-12);
+  }
+
+  &__icon {
+    display: block;
+    margin-bottom: pxToRem(12px);
+
+    svg {
+      width: pxToRem(20px);
+      height: pxToRem(20px);
+      color: var(--sds-clr-gray-11);
+    }
   }
 
   &__description {

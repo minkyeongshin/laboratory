@@ -17,11 +17,11 @@ export const SaveAndShare = ({ imgTheme }: { imgTheme: ImgTheme }) => {
     <div className="SaveAndShare">
       <Box gap="custom" customValue="16px" addlClassName="SaveAndShare__copy">
         <Box gap="custom" customValue="8px">
-          <Text as="h2" size="md" weight="medium">
+          <Text as="h2" size="lg" weight="medium">
             {mockSaveAndShare.title}
           </Text>
 
-          <Text as="p" size="xs" addlClassName="SaveAndShare__description">
+          <Text as="p" size="sm" addlClassName="SaveAndShare__description">
             {mockSaveAndShare.description}
           </Text>
         </Box>
