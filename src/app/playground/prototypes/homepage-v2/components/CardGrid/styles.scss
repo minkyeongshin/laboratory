@@ -20,11 +20,13 @@
   &__cell {
     display: flex;
     flex-direction: column;
-    // Cards are the SAME shade as the page, not lighter: in the Figma export
-    // the cells carry no background at all and show the Content frame's
-    // #f8f8f8 (gray-02) through. Set explicitly rather than left transparent,
-    // because the container paints gray-06 to draw the dividers.
-    background-color: var(--sds-clr-gray-02);
+    // Cards are the SAME shade as the page, separated by borders only — the
+    // export's cells carry no background and show the content frame through.
+    // The page is gray-01 per the designer (the Figma frame is still bound to
+    // Background/Secondary and is being updated), so cells match at gray-01.
+    // Set explicitly rather than left transparent, because the container paints
+    // gray-06 to draw the dividers.
+    background-color: var(--sds-clr-gray-01);
     padding: pxToRem(24px);
     // Cells in a row must match height for the dividers to run full-bleed.
     height: 100%;
@@ -39,7 +41,7 @@
 
     @media (hover: hover) {
       &:hover {
-        background-color: var(--sds-clr-gray-03);
+        background-color: var(--sds-clr-gray-02);
       }
     }
   }

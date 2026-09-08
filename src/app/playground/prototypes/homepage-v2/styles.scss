@@ -1,19 +1,49 @@
 @use "../../../../styles/utils.scss" as *;
 
-.HomeV2 {
-  // Figma: 960px content column inside the 1144px content frame.
-  width: 100%;
-  max-width: pxToRem(960px);
-  padding-top: pxToRem(112px);
+// Background override, scoped to this prototype.
+//
+// The content area's gray-02 comes from `.LabLayout` in production chrome
+// (globals.scss), which is shared and must not change. `:has()` narrows the
+// override to pages that actually render .HomeV2, so it lives here in the
+// prototype's own stylesheet and affects nothing else.
+//
+// `.LabLayout__container` is the content column excluding the sidebar
+// (measured: 1144 wide at left 296, sidebar is 0-296).
+//
+// Per the designer this is gray-01, not the gray-02 the Figma frame is
+// currently bound to — the Figma file is being updated to match.
+.LabLayout__container:has(.HomeV2) {
+  background-color: var(--sds-clr-gray-01);
+}
 
+.HomeV2 {
+  width: 100%;
+
+  // The 960 column, centred. `.LabLayout__container` already contributes 32px
+  // of horizontal padding, so 60px of auto margin here lands the column at the
+  // export's 92px inset.
+  &__column {
+    width: 100%;
+    max-width: pxToRem(960px);
+    margin: 0 auto;
+    // 80 + the container's 32px = the export's 112px from the header.
+    padding-top: pxToRem(80px);
+  }
+
+  // Full width of the content area, not the 960 column. The export's footer is
+  // 1144 wide with 32px horizontal padding; the container's own 32px padding
+  // already supplies that, so no extra padding here.
   &__footer {
-    padding-top: pxToRem(64px);
+    margin-top: pxToRem(32px);
+    padding: pxToRem(24px) 0;
     color: var(--sds-clr-gray-11);
     font-size: pxToRem(12px);
     line-height: pxToRem(18px);
   }
 
   @media screen and (max-width: 1100px) {
-    padding-top: pxToRem(48px);
+    &__column {
+      padding-top: pxToRem(48px);
+    }
   }
 }

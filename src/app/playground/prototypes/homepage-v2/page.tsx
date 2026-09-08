@@ -32,40 +32,42 @@ export default function HomepageV2() {
   const imgTheme = theme === "sds-theme-light" ? "light" : "dark";
 
   return (
-    <Box gap="custom" customValue="48px" addlClassName="HomeV2">
-      <Hero />
+    <div className="HomeV2">
+      <Box gap="custom" customValue="48px" addlClassName="HomeV2__column">
+        <Hero />
 
-      <AskStellar />
+        <AskStellar />
 
-      <Box gap="custom" customValue="40px">
-        <Box gap="custom" customValue="16px">
-          <SectionHeader title="Start building" />
-          <StartBuilding />
-        </Box>
+        <Box gap="custom" customValue="40px">
+          <Box gap="custom" customValue="16px">
+            <SectionHeader title="Start building" />
+            <StartBuilding />
+          </Box>
 
-        <Box gap="custom" customValue="16px">
-          <SectionHeader title="Explore &amp; inspect" />
-          <ExploreInspect />
-        </Box>
+          <Box gap="custom" customValue="16px">
+            <SectionHeader title="Explore &amp; inspect" />
+            <ExploreInspect />
+          </Box>
 
-        <Box gap="custom" customValue="16px">
-          <SectionHeader
-            title="Network"
-            description="Switch between Testnet, Mainnet, or a local network for development."
-          />
-          <NetworkPicker />
-        </Box>
+          <Box gap="custom" customValue="16px">
+            <SectionHeader
+              title="Network"
+              description="Switch between Testnet, Mainnet, or a local network for development."
+            />
+            <NetworkPicker />
+          </Box>
 
-        <Box gap="custom" customValue="16px">
-          <SectionHeader
-            title="Learn by building"
-            description="Step-by-step tutorials to help you get started with Stellar Lab."
-          />
-          <LearnByBuilding imgTheme={imgTheme} />
-        </Box>
+          <Box gap="custom" customValue="16px">
+            <SectionHeader
+              title="Learn by building"
+              description="Step-by-step tutorials to help you get started with Stellar Lab."
+            />
+            <LearnByBuilding imgTheme={imgTheme} />
+          </Box>
 
-        <Box gap="custom" customValue="24px">
-          <SaveAndShare imgTheme={imgTheme} />
+          <Box gap="custom" customValue="24px">
+            <SaveAndShare imgTheme={imgTheme} />
+          </Box>
         </Box>
       </Box>
 
@@ -76,6 +78,9 @@ export default function HomepageV2() {
         Footer component in the codebase, and the playground's "full" chrome
         renders header + sidebar only. Extracting one would be a production
         refactor, out of scope for this prototype.
+
+        Sits outside __column deliberately: the export's footer spans the full
+        content area, not the 960 column.
       */}
       <Box
         gap="md"
@@ -115,6 +120,6 @@ export default function HomepageV2() {
           </>
         </Box>
       </Box>
-    </Box>
+    </div>
   );
 }
