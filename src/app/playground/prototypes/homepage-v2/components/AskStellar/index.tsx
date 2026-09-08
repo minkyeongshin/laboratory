@@ -87,7 +87,7 @@ export const AskStellar = ({
               className="AskStellar__chip"
               onClick={() => onSubmit(suggestion)}
             >
-              <Text as="span" size="sm">
+              <Text as="span" size="sm" weight="medium">
                 {suggestion}
               </Text>
             </button>

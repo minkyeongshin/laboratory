@@ -119,6 +119,35 @@ the block reads as grouped:
 | input → chips | 12px |
 | chips → first section | 96px — the largest gap on the page |
 
+## Patterns
+
+### Suggestion chip
+
+**40px, weight 500, 8/12 padding. Intentionally NOT SDS `Button` (32/600):**
+chips fill the input rather than navigate, and must read differently from the
+action buttons elsewhere on the page. **If this pattern appears on a second
+surface, propose it to SDS.**
+
+Weight 500 is the deliberate middle of the ladder — 400 read as a label rather
+than something pressable, and 600 (SDS `Button`) made a row of chips compete
+with the input above them. 500 matches the card titles: the name of something
+you can press.
+
+Audited against `Button variant="tertiary" size="md" isRounded`, which shares
+the colours and shape but differs in four ways — height 32 vs 40 (fixed by
+`--Button-height`), padding 6/10 vs 8/12, weight 600 vs 500, and hover `gray-04`
+vs `gray-02`. Adopting it would mean overriding all four, which is most of the
+component.
+
+The other two pill-shaped elements on the page:
+
+- **"Ask" button** — stock SDS `Button variant="secondary" size="md" isRounded`.
+  No overrides.
+- **`AskStellarPill`** — local, because its label is gradient-filled via
+  `background-clip: text` and SDS `Button` paints its own colour over the label.
+  Its metrics still match SDS `md` (32px tall, 14px), differing only by 2px of
+  horizontal padding and a lilac border that ties it to the Ask Stellar block.
+
 ## Design system notes
 
 Per `rules/02-styling.md`, gaps flagged rather than worked around:

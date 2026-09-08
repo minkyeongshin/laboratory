@@ -95,9 +95,12 @@
     }
   }
 
-  // A real button, not a link: clicking opens the panel rather than navigating.
-  // SDS <Button> is not used because it has no pill-shaped outline variant at
-  // this size — tertiary is a 6px radius with its own height.
+  // Suggestion chip — 40px, weight 500, 8/12 padding. Intentionally NOT SDS
+  // Button (32/600): chips fill the input rather than navigate, and must read
+  // differently from the action buttons elsewhere on the page. If this pattern
+  // appears on a second surface, propose it to SDS.
+  //
+  // A real button, not a link: clicking fills the panel rather than navigating.
   &__chip {
     display: inline-flex;
     align-items: center;
@@ -106,7 +109,8 @@
     border: 1px solid var(--sds-clr-gray-06);
     border-radius: pxToRem(100px);
     color: var(--sds-clr-gray-12);
-    font: inherit;
+    // Only the size — the inner <Text> owns family, weight and line-height.
+    font-size: inherit;
     cursor: pointer;
     transition: background-color 0.15s ease;
 
