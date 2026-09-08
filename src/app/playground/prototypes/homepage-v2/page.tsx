@@ -51,9 +51,14 @@ export default function HomepageV2() {
   return (
     <div className="HomeV2">
       <Box gap="custom" customValue="48px" addlClassName="HomeV2__column">
-        <Hero />
+        {/* Ask Stellar is the hero's CTA, so it's grouped with the heading at
+            a tighter 40px. The 48px below still separates the block from the
+            first section. */}
+        <Box gap="custom" customValue="40px">
+          <Hero />
 
-        <AskStellar onSubmit={askStellar} />
+          <AskStellar onSubmit={askStellar} />
+        </Box>
 
         <Box gap="custom" customValue="40px">
           <Box gap="custom" customValue="16px">

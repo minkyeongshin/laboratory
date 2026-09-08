@@ -20,8 +20,7 @@ export const Hero = () => (
     </Heading>
 
     <Text as="p" size="md" addlClassName="Hero__subtitle">
-      The all-in-one web tool to build, sign, simulate, and submit transactions
-      and interact with contracts on the Stellar network.
+      Everything you need to build and test on Stellar, right in your browser.
     </Text>
   </Box>
 );

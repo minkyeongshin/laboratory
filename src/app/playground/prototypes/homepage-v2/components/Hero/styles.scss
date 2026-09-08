@@ -6,8 +6,9 @@
   }
 
   &__subtitle {
-    // Figma constrains the subtitle to 585px so it wraps to two lines.
-    max-width: pxToRem(585px);
+    // 560px, matching the Ask Stellar input below, so the two share a right
+    // edge. (The Figma's 585px left them 25px out of alignment.)
+    max-width: pxToRem(560px);
     color: var(--sds-clr-gray-11);
   }
 }
