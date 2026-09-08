@@ -40,7 +40,7 @@ export const AskStellar = ({
   };
 
   return (
-    <Box gap="custom" customValue="16px" addlClassName="AskStellar">
+    <Box gap="custom" customValue="12px" addlClassName="AskStellar">
       <Box gap="custom" customValue="8px">
         <div className="AskStellar__label">
           <Image
@@ -84,15 +84,12 @@ export const AskStellar = ({
           <li key={suggestion} className="AskStellar__suggestion">
             <button
               type="button"
-              className="AskStellar__suggestionButton"
+              className="AskStellar__chip"
               onClick={() => onSubmit(suggestion)}
             >
               <Text as="span" size="sm">
                 {suggestion}
               </Text>
-              {/* Always visible, not hover-only, so the rows read as
-                  actionable at rest. */}
-              <Icon.ArrowRight />
             </button>
           </li>
         ))}

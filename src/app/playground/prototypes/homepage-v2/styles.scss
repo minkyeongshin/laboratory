@@ -38,10 +38,10 @@
     width: 100%;
     max-width: pxToRem(960px);
     margin: 0 auto;
-    // Aligns the h1's text top with the sidebar's first item ("Saved"), which
-    // sits 30px below the header. The container's top padding is zeroed above,
-    // so this is the whole offset; 1px comes off for the h1's half-leading.
-    padding-top: pxToRem(29px);
+    // Aligns the h1's text top with the "Introduction" nav item — the entry for
+    // this page — which sits 75px below the header. The container's top padding
+    // is zeroed above, so this is the whole offset.
+    padding-top: pxToRem(75px);
   }
 
   // Full width of the content area, not the 960 column. The export's footer is

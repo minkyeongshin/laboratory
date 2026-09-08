@@ -11,12 +11,9 @@ import "./styles.scss";
 // calc(font-size * .04 * -1) = -1.28px, applied by SDS with no overrides.
 
 export const Hero = () => (
-  <Box gap="custom" customValue="24px" addlClassName="Hero">
-    <Heading as="h1" size="sm" weight="medium">
-      {/* The design breaks the line before the em dash rather than letting it
-          wrap naturally, so the break is explicit. */}
-      Simulate, analyze, and explore
-      <br />— all in one place
+  <Box gap="custom" customValue="16px" addlClassName="Hero">
+    <Heading as="h1" size="md" weight="medium">
+      Simulate, analyze, and explore — all in one place
     </Heading>
 
     <Text as="p" size="md" addlClassName="Hero__subtitle">

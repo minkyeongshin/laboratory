@@ -88,7 +88,7 @@ A designer decision, applied everywhere. All SDS sizes, no overrides.
 
 | Role | Size | Weight | Colour |
 |---|---|---|---|
-| Page h1 | `Heading size="sm"` (32/40) | medium | gray-12 |
+| Page h1 | `Heading size="md"` (40/48) | medium | gray-12 |
 | Hero subtitle | `Text size="md"` (16/24) | regular | gray-11 |
 | Section title | `Text size="lg"` (18/26) | medium | gray-12 |
 | Section description | `Text size="sm"` (14) | regular | gray-11 |
@@ -103,11 +103,21 @@ which inherited down onto the descriptions. Colour the title element, never the
 cell — the components now carry explicit `__title` classes so the rule holds
 structurally instead of relying on an override.
 
-The h1's top edge aligns with the sidebar's first item ("Saved"), so the two
-columns start on the same line. That needed the shared container's 32px top
-padding zeroed for this prototype — 32px alone already pushed the h1 past the
-target, so the offset could not be reached from the column. `__column` then
-carries the whole 29px.
+The h1's text top aligns with the **"Introduction"** nav item — the sidebar
+entry for this page — so the page title sits on the same line as the item that
+leads to it. That needed the shared container's 32px top padding zeroed for this
+prototype; `__column` carries the whole 75px offset instead.
+
+**Hero spacing** is a deliberate hierarchy rather than one uniform rhythm, so
+the block reads as grouped:
+
+| | |
+|---|---|
+| h1 → subtitle | 16px |
+| subtitle → Ask Stellar label | 40px |
+| label → input | 8px (a label hugs its field) |
+| input → chips | 12px |
+| chips → first section | 96px — the largest gap on the page |
 
 ## Design system notes
 

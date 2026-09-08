@@ -6,9 +6,7 @@
   }
 
   &__subtitle {
-    // 560px, matching the Ask Stellar input below, so the two share a right
-    // edge. (The Figma's 585px left them 25px out of alignment.)
-    max-width: pxToRem(560px);
+    // Natural width — it's a single line, so a constraint does nothing.
     color: var(--sds-clr-gray-11);
   }
 }

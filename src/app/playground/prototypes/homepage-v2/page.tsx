@@ -50,7 +50,9 @@ export default function HomepageV2() {
 
   return (
     <div className="HomeV2">
-      <Box gap="custom" customValue="48px" addlClassName="HomeV2__column">
+      {/* 96px between the hero block and the first section — the largest gap
+          on the page, marking the hero/content boundary. */}
+      <Box gap="custom" customValue="96px" addlClassName="HomeV2__column">
         {/* Ask Stellar is the hero's CTA, so it's grouped with the heading at
             a tighter 40px. The 48px below still separates the block from the
             first section. */}
