@@ -77,9 +77,17 @@ Developer Docs) are gone with no replacement slot, per design direction.
 
 Per `rules/02-styling.md`, gaps flagged rather than worked around:
 
-- **Ask Stellar is off-token by design**, confirmed with the designer: 3px
-  `#544a89` border, 24px radius, gradient-filled label. SDS `Input` was not used
-  because none of its chrome survives the overrides.
+- **Ask Stellar is off-token by design**, confirmed with the designer: a 3px
+  gradient stroke, 24px radius, and a gradient-filled label. SDS `Input` was not
+  used because none of its chrome survives the overrides.
+  - An earlier note here called the border a solid `#544a89`. That was wrong:
+    the stroke is a gradient in Figma, and the MCP export flattens it because a
+    CSS `border` cannot take one. `#544a89` is that ramp sampled at the stroke's
+    midpoint — sampling `rgb(141,124,226) → rgb(36,29,73)` at 54% (the visible
+    span, given stops at 33.9% and 155.4%) gives `rgb(84,73,143)` against the
+    export's `rgb(84,74,137)`. Nobody chose that colour. It is now drawn as a
+    real gradient via the padding-box/border-box background trick, so **no raw
+    hex is left in the prototype.**
 - **SDS line-heights run 2px looser than Figma** on body text — `Text size="sm"`
   is 14/22 against Figma's 14/20, `size="xs"` is 12/20 against 12/18. Tokens
   used as-is; cards are a few px taller than the comps.

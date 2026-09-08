@@ -12,7 +12,7 @@ import sparkle from "../../assets/ask-stellar-sparkle.svg";
 import "./styles.scss";
 
 // This is the one block on the page built deliberately off-token, confirmed
-// with the designer: the 3px #544a89 border, 24px radius, and gradient-filled
+// with the designer: the 3px gradient stroke, 24px radius, and gradient-filled
 // label are intentional and have no SDS equivalent.
 //
 // SDS <Input> is not used because none of its chrome survives: it renders a 1px

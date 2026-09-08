@@ -27,17 +27,37 @@
     color: transparent;
   }
 
-  // Off-token by design: 3px #544a89 border at a 24px radius. SDS inputs are
-  // 1px at a fixed radius and expose neither.
+  // Off-token by design: a 3px gradient stroke at a 24px radius. SDS inputs are
+  // 1px solid at a fixed radius and expose neither.
+  //
+  // The stroke is a gradient in Figma, using the same ramp as the label above.
+  // The MCP export flattens it to a solid #544a89 because a CSS `border` can't
+  // take a gradient — that value is the ramp sampled at the stroke's midpoint,
+  // not a colour anyone chose.
+  //
+  // Two backgrounds make it work: the fill is clipped to padding-box and the
+  // gradient to border-box, so the transparent 3px border becomes the window
+  // the gradient shows through. Radius and width both survive.
   &__field {
     display: flex;
     align-items: center;
     gap: pxToRem(8px);
     height: pxToRem(44px);
     padding: pxToRem(8px) pxToRem(8px) pxToRem(8px) pxToRem(20px);
-    background-color: var(--sds-clr-gray-01);
-    border: 3px solid #544a89;
+    border: 3px solid transparent;
     border-radius: pxToRem(24px);
+    background-image:
+      linear-gradient(
+        var(--sds-clr-gray-01),
+        var(--sds-clr-gray-01)
+      ),
+      linear-gradient(
+        248.12deg,
+        rgb(141 124 226) 33.934%,
+        rgb(36 29 73) 155.41%
+      );
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
   }
 
   &__input {
