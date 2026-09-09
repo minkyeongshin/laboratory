@@ -66,10 +66,12 @@ is open, which is how the Figma frame shows it.
   production's `-${imgTheme}` convention, and `dark` currently resolves to the
   light file. When the designer exports dark assets, add the import and change
   one value per entry — no consumer changes.
-- **`save-share-composite-light.png` is a 1x placeholder.** §7's art is a live
-  Figma composition of real component instances, not an exportable asset, so it
-  was captured as a 591x179 render. It is soft on retina. The designer is
-  exporting a 2x.
+  The save/share art is `save-share-composite-light@3x.png` — a 1773x537 export
+  rendered at 591x179 CSS. Note `get_screenshot` will not do this: `maxDimension`
+  only scales *down*, so it returns the node's natural 591x179. Use
+  `download_assets` with `defaultScale: 3` instead. next/image serves up to the
+  2x (1200w) variant from that source, so it is a genuine downsample rather than
+  an upscale.
 
 **Known issues**
 

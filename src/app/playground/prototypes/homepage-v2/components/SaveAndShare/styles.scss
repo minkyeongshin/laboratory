@@ -17,7 +17,9 @@
     overflow: hidden;
 
     img {
+      // Caps at the 591px design size but still shrinks on narrow viewports.
       width: 100%;
+      max-width: pxToRem(591px);
       height: auto;
     }
   }

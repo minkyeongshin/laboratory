@@ -13,7 +13,8 @@ import { Routes } from "@/constants/routes";
 import tutorialCreateAccount from "./assets/tutorial-create-account-light.png";
 import tutorialPayments from "./assets/tutorial-payments-light.png";
 import tutorialHelloWorld from "./assets/tutorial-hello-world-light.png";
-import saveShareComposite from "./assets/save-share-composite-light.png";
+// 3x export (1773x537) rendered at 591x179 CSS, so it stays sharp on retina.
+import saveShareComposite from "./assets/save-share-composite-light@3x.png";
 
 export type ImgTheme = "light" | "dark";
 

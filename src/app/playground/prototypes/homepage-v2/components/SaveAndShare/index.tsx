@@ -37,11 +37,15 @@ export const SaveAndShare = ({ imgTheme }: { imgTheme: ImgTheme }) => {
         </div>
       </Box>
 
-      {/* TODO: this is a 1x render of a live Figma composition — there was no
-          exportable asset. Designer is exporting a 2x. It will look soft on
-          retina until then. */}
+      {/* Source is a 3x export (1773x537); width/height are the CSS size, so
+          next/image downsamples and serves an appropriate srcset. */}
       <div className="SaveAndShare__art" aria-hidden="true">
-        <Image src={mockSaveAndShare.image[imgTheme]} alt="" />
+        <Image
+          src={mockSaveAndShare.image[imgTheme]}
+          alt=""
+          width={591}
+          height={179}
+        />
       </div>
     </div>
   );
