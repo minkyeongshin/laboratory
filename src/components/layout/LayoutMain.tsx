@@ -14,6 +14,17 @@ import { FloatNotification } from "@/components/FloatNotification";
 import { initTracking } from "@/metrics/tracking";
 import { useStore } from "@/store/useStore";
 
+// PROTOTYPE HOOK — the only production reference to playground code.
+//
+// Lets an Ask Stellar conversation started in the homepage-v2 prototype follow
+// the user onto any route. AskStellarGlobal renders nothing until that
+// prototype has been visited in the current tab (a sessionStorage flag), so
+// anyone who never opens it sees nothing at all.
+//
+// If Ask Stellar ships, this is where the real component mounts — the import
+// path changes and everything else here stays as it is.
+import { AskStellarGlobal } from "@/app/playground/prototypes/homepage-v2/components/AskStellarGlobal";
+
 export const LayoutMain = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const { floatNotifications, removeFloatNotification } = useStore();
@@ -82,7 +93,12 @@ export const LayoutMain = ({ children }: { children: ReactNode }) => {
 
   // Render standalone pages without the main app shell
   if (isStandalonePage) {
-    return <>{children}</>;
+    return (
+      <>
+        {children}
+        <AskStellarGlobal />
+      </>
+    );
   }
 
   return (
@@ -105,6 +121,8 @@ export const LayoutMain = ({ children }: { children: ReactNode }) => {
           </LayoutSidebarContent>
         </LayoutWithSidebar>
       </Hydration>
+
+      <AskStellarGlobal />
     </div>
   );
 };

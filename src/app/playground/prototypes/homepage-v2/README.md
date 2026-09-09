@@ -37,6 +37,35 @@ the `.png` / `.svg` imports in `mock-data.ts` and the Ask Stellar components.
   in `mock-data.ts`. **Anything typed freehand falls back to the deploy reply**,
   so a typed question will usually be answered off-topic. Nothing is requested
   or streamed, and multi-turn is visual only.
+**The conversation is app-wide and lasts the tab.** It lives in
+`store/askStellarStore.ts`, a Zustand store persisted to **sessionStorage**
+under `lab.playground.askStellar` — the same shape as
+`src/store/createTransactionFlowStore.ts`, so promoting it is a move rather than
+a rewrite. sessionStorage is the point: the conversation survives navigation and
+reload, and dies with the tab. localStorage would outlive it.
+
+`components/AskStellarGlobal/` renders the panel and pill from that store and is
+mounted once in `LayoutMain`, so a conversation started here follows the user
+onto any route, including production ones like `/account/fund`.
+
+**That `LayoutMain` mount is the one production touch** — the only reference
+from production code into the playground. It is gated on
+`hasVisitedPrototype`, set the first time this prototype mounts in a tab, so
+anyone who never opens the prototype sees nothing. It is also exactly where a
+real implementation would mount: the import path changes and nothing else does.
+
+The flag lives inside the same persisted record rather than as a separate
+`=1` key, to avoid a second storage mechanism for one boolean.
+
+The store rehydrates at module load on the client, not in a component effect —
+child effects run before parent effects, so a page marking itself visited would
+otherwise be clobbered by a later rehydrate in the layout. `AskStellarGlobal`
+still gates on mount so the server render and the first client render agree.
+
+Verified: production route before visiting → nothing; ask on home → panel +
+pill; navigate to `/account/fund` → both persist with history; close → pill
+stays; reopen → history intact; reload → intact; **new tab → nothing.**
+
 The panel minimises rather than closing. Conversation and visibility are
 separate pieces of state, so:
 

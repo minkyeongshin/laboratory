@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { Logo } from "@stellar/design-system";
 
 import { SdsLink } from "@/components/SdsLink";
@@ -9,9 +9,8 @@ import { GITHUB_URL } from "@/constants/settings";
 import { useStore } from "@/store/useStore";
 
 import { AskStellar } from "./components/AskStellar";
-import { AskStellarPanel } from "./components/AskStellarPanel";
-import { AskStellarPill } from "./components/AskStellarPill";
 import { ExploreInspect } from "./components/ExploreInspect";
+import { useAskStellarStore } from "./store/askStellarStore";
 import { Hero } from "./components/Hero";
 import { LearnByBuilding } from "./components/LearnByBuilding";
 import { NetworkPicker } from "./components/NetworkPicker";
@@ -33,20 +32,16 @@ export default function HomepageV2() {
   // exist yet and resolve to the light files — see mock-data.ts.
   const imgTheme = theme === "sds-theme-light" ? "light" : "dark";
 
-  // Ask Stellar. Conversation and visibility are separate so that closing the
-  // panel minimises it rather than destroying the history: `askMessages`
-  // survives, `isAskOpen` toggles. Once there is at least one exchange the pill
-  // stays for the rest of the session as the minimised state.
-  //
-  // Lives here because the input, the panel, and the pill all need it, and it's
-  // prototype-local UI state — nothing the querystring store should carry.
-  const [askMessages, setAskMessages] = useState<string[]>([]);
-  const [isAskOpen, setIsAskOpen] = useState(false);
+  // The conversation lives in a sessionStorage-backed store so it follows the
+  // user off this page. The panel and pill are mounted app-wide by
+  // AskStellarGlobal (see LayoutMain); this page only writes to the store.
+  const { ask, markPrototypeVisited } = useAskStellarStore();
 
-  const askStellar = (query: string) => {
-    setAskMessages((prev) => [...prev, query]);
-    setIsAskOpen(true);
-  };
+  // Opens the gate for the app-wide mount. Until the prototype has been visited
+  // in this tab, production routes render nothing.
+  useEffect(() => {
+    markPrototypeVisited();
+  }, [markPrototypeVisited]);
 
   return (
     <div className="HomeV2">
@@ -59,7 +54,7 @@ export default function HomepageV2() {
         <Box gap="custom" customValue="40px">
           <Hero />
 
-          <AskStellar onSubmit={askStellar} />
+          <AskStellar onSubmit={ask} />
         </Box>
 
         <Box gap="custom" customValue="40px">
@@ -94,22 +89,6 @@ export default function HomepageV2() {
           </Box>
         </Box>
       </Box>
-
-      {isAskOpen ? (
-        <AskStellarPanel
-          messages={askMessages}
-          onSend={askStellar}
-          onClose={() => setIsAskOpen(false)}
-        />
-      ) : null}
-
-      {/* Minimised state. Appears with the first exchange and stays. */}
-      {askMessages.length > 0 ? (
-        <AskStellarPill
-          isPanelOpen={isAskOpen}
-          onClick={() => setIsAskOpen((open) => !open)}
-        />
-      ) : null}
 
       {/*
         Footer. Copied verbatim from src/app/page.tsx — there is no shared
