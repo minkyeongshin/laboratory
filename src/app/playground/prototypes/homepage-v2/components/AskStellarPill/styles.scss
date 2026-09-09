@@ -10,9 +10,15 @@
   display: inline-flex;
   align-items: center;
   gap: pxToRem(4px);
-  // Figma draws the 3px stroke inside the 32px frame, so the CSS padding is the
-  // node's 6/12 minus the border to land on the same 32px height.
-  padding: pxToRem(3px) pxToRem(9px);
+  // The stroke is OUTSIDE the 117x32 frame, so the visual box is 123x38. The
+  // app sets border-box globally; content-box is what puts the 3px border
+  // outside the padding rather than eating into it.
+  //
+  // Padding and line-height are the node's own: Label sits at y=6 in a 32-tall
+  // frame and is 20 tall, so 6/12 with a 20px line-height — not 8/12 with 16,
+  // which happens to give the same 32 but isn't what the node says.
+  box-sizing: content-box;
+  padding: pxToRem(6px) pxToRem(12px);
 
   // The small sibling of the Ask Stellar input: same 3px gradient stroke, same
   // ramp, same padding-box/border-box treatment. The MCP export flattens it to

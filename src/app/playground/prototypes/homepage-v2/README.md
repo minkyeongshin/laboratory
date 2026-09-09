@@ -242,6 +242,32 @@ The other two pill-shaped elements on the page:
   stroke to a solid `#544a89`, exactly as it did for the input, which is what
   sent the first pass down the wrong path.
 
+## Figma-to-code pitfalls
+
+Things the MCP export does not tell you, each of which cost a round here.
+
+**Stroke alignment (inside / center / outside) is not in the export.** An
+outside stroke makes the visual box larger than the node's W×H, so building to
+the node dimensions gives you a control that is too small by twice the stroke
+width. Always check in Figma. **In this design: pill = outside, input =
+inside.** The pill's 117×32 frame with a 3px outside stroke is a 123×38 visual
+box; the input's 44px height already includes its stroke.
+
+You can confirm alignment without opening Figma: export the node with
+`download_assets` and compare the returned bounds to the node's W×H. The
+difference is the stroke overhang plus the shadow bleed, and inside vs outside
+differ by twice the stroke width. The pill exported at 143×58 against a 117×32
+node — 123×38 plus a 20px shadow bleed, i.e. outside. The panel exported at
+434×660 against 414×640 — exactly 640+20, i.e. inside.
+
+**Gradient strokes and gradient text are flattened.** A CSS `border` cannot take
+a gradient, so the export emits a solid colour sampled from the ramp — `#544a89`
+for both the Ask Stellar input and the pill. Both are really 3px gradient
+strokes on the same ramp. See the Ask Stellar notes above.
+
+**`maxDimension` on `get_screenshot` only scales down.** For a retina asset use
+`download_assets` with `defaultScale`.
+
 ## Design system notes
 
 Per `rules/02-styling.md`, gaps flagged rather than worked around:
