@@ -6,10 +6,12 @@
   width: 100%;
   max-width: pxToRem(960px);
 
-  // Neutral chrome: a grey edge lifted by a soft two-layer shadow. The 3px
-  // gradient stroke from the Figma export is gone — see README. Focus adds a
-  // 2px lilac-09 ring drawn with box-shadow, so the border never changes width
-  // and nothing reflows.
+  // Neutral chrome. The 3px gradient stroke from the Figma export is gone —
+  // see README. Focus adds a 2px lilac-09 ring drawn with box-shadow, so the
+  // border never changes width and nothing reflows.
+  //
+  // A single hairline shadow, not elevation: it firms up the gray-06 edge
+  // without lifting the field off a page where nothing else is lifted.
   &__field {
     display: flex;
     flex-direction: column;
@@ -18,9 +20,7 @@
     background-color: var(--sds-clr-gray-01);
     border: 1px solid var(--sds-clr-gray-06);
     border-radius: pxToRem(24px);
-    box-shadow:
-      0 pxToRem(1px) pxToRem(2px) rgb(0 0 0 / 4%),
-      0 pxToRem(4px) pxToRem(12px) rgb(0 0 0 / 4%);
+    box-shadow: 0 pxToRem(1px) pxToRem(2px) rgb(0 0 0 / 3%);
     transition: box-shadow 0.15s ease;
 
     &:focus-within {

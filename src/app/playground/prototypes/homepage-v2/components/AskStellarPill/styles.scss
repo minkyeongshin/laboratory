@@ -19,9 +19,13 @@
   border: 1px solid var(--sds-clr-gray-06);
   // Fully rounded, against the field's 24px — the pill's radius is a pill.
   border-radius: pxToRem(100px);
-  box-shadow: 0 pxToRem(4px) pxToRem(10px) rgb(0 0 0 / 5%);
+  // Matches the field's hairline rather than the export's 0 4px 10px: the two
+  // read as the same object, and nothing else on the page is elevated.
+  box-shadow: 0 pxToRem(1px) pxToRem(2px) rgb(0 0 0 / 3%);
   cursor: pointer;
-  transition: border-color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 
   &__sparkle {
     flex-shrink: 0;
@@ -38,8 +42,6 @@
     -webkit-mask-size: contain;
   }
 
-  // Solid lilac-11, not a gradient — the gradient in this component is the
-  // border.
   &__label {
     font-size: pxToRem(14px);
     line-height: pxToRem(20px);
@@ -48,9 +50,12 @@
     white-space: nowrap;
   }
 
+  // Hover firms the edge rather than lifting the pill — a 12% elevation would
+  // contradict the 3% hairline it sits at.
   @media (hover: hover) {
     &:hover {
-      box-shadow: 0 pxToRem(4px) pxToRem(12px) rgb(0 0 0 / 12%);
+      border-color: var(--sds-clr-gray-07);
+      box-shadow: 0 pxToRem(1px) pxToRem(2px) rgb(0 0 0 / 6%);
     }
   }
 }
