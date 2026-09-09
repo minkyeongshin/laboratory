@@ -252,6 +252,28 @@ hierarchy (16 / 40 / 8 / 12 / 96), not one rhythm.
   of a live Figma composition of real product components. It will go stale the
   moment those components change, and it can't be themed. Rebuilding it in DOM
   is the real fix.
+- **The hero has never been seen with an announcement banner above it.**
+  `LayoutMain` early-returns for `/playground/*` without rendering
+  `MaintenanceBanner` or `NetworkNotAvailableBanner`, so the prototype route
+  never shows either. **A shipped home at `/` would**, and every judgement about
+  the hero — the 75px top offset, the h1 aligning with the "Introduction" nav
+  item, the 96px hero/content boundary — was made against a page with nothing
+  above the header.
+
+  The alignment itself should survive on inspection: banner and header sit in
+  one block above both the sidebar and the content column, so the two shift down
+  together. That is reasoning from the layout, not something anyone has looked
+  at. What definitely changes is how much hero is above the fold, and
+  `MaintenanceBanner` is expandable — its height changes on click, mid-page.
+  Worth an explicit review pass with a banner present before shipping.
+
+  On the Vercel demo the banner does appear on production routes reached from
+  the sidebar. That was accepted rather than suppressed: the fetch in
+  `useMaintenanceData` is a client-side call to a hardcoded third-party URL
+  (`statuspage.io`), so no Vercel rewrite can intercept it, and making it fail
+  would render `error.message` *as* a banner — worse than leaving it alone.
+  Hiding it properly would mean making that URL env-configurable.
+
 - The Figma file and the code diverge in two places the designer chose:
   page background is `gray-01` where the frame is bound to Background/Secondary,
   and the pill label is solid where the frame has a gradient.
