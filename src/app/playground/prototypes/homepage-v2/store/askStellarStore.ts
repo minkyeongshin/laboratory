@@ -19,6 +19,12 @@ const STORAGE_KEY = "lab.playground.askStellar";
 type AskStellarState = {
   /** User messages, oldest first. Each is answered by the canned reply. */
   messages: string[];
+  /**
+   * How many messages have had their reply revealed. Anything beyond this is
+   * still "typing". Persisted so a reload mid-reply resumes rather than
+   * showing an answer that was never delivered.
+   */
+  answeredCount: number;
   isOpen: boolean;
   /**
    * Set the first time the homepage-v2 prototype mounts in this tab. Production
@@ -26,8 +32,12 @@ type AskStellarState = {
    */
   hasVisitedPrototype: boolean;
 
-  /** Append a question and open the panel. */
+  /** Append a question and open the panel. The reply is not revealed yet. */
   ask: (query: string) => void;
+  /** Reveal the reply for everything asked so far. */
+  markAnswered: () => void;
+  /** Clear the conversation and close. The pill goes with it. */
+  reset: () => void;
   close: () => void;
   toggle: () => void;
   markPrototypeVisited: () => void;
@@ -37,6 +47,7 @@ export const useAskStellarStore = create<AskStellarState>()(
   persist(
     (set) => ({
       messages: [],
+      answeredCount: 0,
       isOpen: false,
       hasVisitedPrototype: false,
 
@@ -45,6 +56,9 @@ export const useAskStellarStore = create<AskStellarState>()(
           messages: [...state.messages, query],
           isOpen: true,
         })),
+      markAnswered: () =>
+        set((state) => ({ answeredCount: state.messages.length })),
+      reset: () => set({ messages: [], answeredCount: 0, isOpen: false }),
       close: () => set({ isOpen: false }),
       toggle: () => set((state) => ({ isOpen: !state.isOpen })),
       markPrototypeVisited: () => set({ hasVisitedPrototype: true }),

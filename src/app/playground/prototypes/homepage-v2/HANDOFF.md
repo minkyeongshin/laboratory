@@ -144,6 +144,14 @@ product from asking it from the homepage. The prototype sends nothing.
 **[PRODUCT DECISION] Auth — who can use it.** Anonymous visitors? Wallet
 connected only? Rate limited by IP or by account? Not modelled at all.
 
+**[PRODUCT DECISION] Does the panel overlay content, or push it aside?** Today
+it is a fixed overlay in the bottom-right corner, floating above whatever page
+you are on. The alternative is a docked rail that reflows the page. Overlay was
+never chosen — it is simply what a prototype does most cheaply. It matters
+because Ask Stellar is meant to be usable *while* working: an overlay covers
+part of the form you are asking about, and on a transaction page that may be
+exactly the part you need to see.
+
 **[DESIGNER TO FILL] Mobile and responsive behaviour.** The panel is a
 fixed 414×640 box with one invented breakpoint (full-bleed under 560px). There
 is no tablet or mobile design for the panel, the chips, or the hero.
@@ -289,6 +297,11 @@ hierarchy (16 / 40 / 8 / 12 / 96), not one rhythm.
 - **No borderless `Button` variant.** All six variants set
   `--Button-color-border-default`, so "View all tutorials" neutralises the border
   and background custom properties locally.
+- **A `Tooltip` trigger cannot also be an action button.** `Floater` does
+  `cloneElement(triggerEl, { onClick: toggleFloater })`, which **overwrites** the
+  trigger's own `onClick` rather than composing with it. The panel's "New
+  conversation" button silently did nothing until it was switched to a native
+  `title`. Any icon button that both acts and needs a tooltip hits this.
 - No shadow or radius tokens at all — the panel's shadow and the 24/16/8/6/4px
   radii are local `pxToRem` values.
 - `li::before { content: "-" }` applies to every list item under the theme

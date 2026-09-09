@@ -13,28 +13,40 @@ import sparkle from "../../assets/ask-stellar-sparkle.svg";
 import "./styles.scss";
 
 // Prototype-only. There is no chat component in SDS, and the panel's shell
-// (24px radius, drop shadow, bubble styling) has no SDS equivalent either.
-// The interactive pieces inside it are all SDS: the two action buttons map to
-// Button secondary/tertiary at size md with no overrides.
+// (24px radius, drop shadow) has no SDS equivalent either. The buttons inside
+// it are all SDS.
 //
 // TODO: no API. Replies are hand-written and keyed by suggestion text, so the
 // three suggestions answer on topic but anything typed freehand falls back to
-// the deploy reply. Multi-turn is visual only.
+// the deploy reply. The typing delay below is theatre, not a real request.
+
+/** Fake think-time before a reply appears, in ms. */
+const TYPING_MIN_MS = 600;
+const TYPING_MAX_MS = 900;
 
 export const AskStellarPanel = ({
   messages,
+  answeredCount,
   onSend,
+  onAnswered,
+  onReset,
   onClose,
 }: {
-  /** User messages, oldest first. Each one is answered by the canned reply. */
+  /** User messages, oldest first. Each is answered by the canned reply. */
   messages: string[];
+  /** Messages past this index are still "typing". */
+  answeredCount: number;
   onSend: (text: string) => void;
+  onAnswered: () => void;
+  onReset: () => void;
   onClose: () => void;
 }) => {
   const [draft, setDraft] = useState("");
   const panelEl = useRef<HTMLDivElement>(null);
   const scrollEl = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  const isTyping = messages.length > answeredCount;
 
   // Move focus into the panel when it opens.
   useEffect(() => {
@@ -53,14 +65,27 @@ export const AskStellarPanel = ({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
-  // Keep the newest exchange in view.
+  // Fake latency, so a reply doesn't appear in the same frame as the question.
+  useEffect(() => {
+    if (!isTyping) {
+      return;
+    }
+
+    const delay =
+      TYPING_MIN_MS + Math.random() * (TYPING_MAX_MS - TYPING_MIN_MS);
+    const timer = setTimeout(onAnswered, delay);
+
+    return () => clearTimeout(timer);
+  }, [isTyping, onAnswered]);
+
+  // Keep the newest exchange — question, indicator, then reply — in view.
   useEffect(() => {
     const el = scrollEl.current;
 
     if (el) {
       el.scrollTop = el.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, answeredCount]);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -92,20 +117,35 @@ export const AskStellarPanel = ({
           <span className="AskStellarPanel__titleText">Ask Stellar</span>
         </div>
 
-        <button
-          type="button"
-          className="AskStellarPanel__iconButton"
-          onClick={onClose}
-          aria-label="Close Ask Stellar"
-        >
-          <Icon.X />
-        </button>
+        <div className="AskStellarPanel__headerActions">
+          {/* Native title rather than SDS <Tooltip>: Floater clones its trigger
+              with `onClick: toggleFloater`, which overwrites the trigger's own
+              handler — so a Tooltip trigger cannot also be an action button.
+              Raised in HANDOFF as an SDS gap. */}
+          <button
+            type="button"
+            className="AskStellarPanel__iconButton"
+            onClick={onReset}
+            aria-label="New conversation"
+            title="New conversation"
+          >
+            <Icon.MessagePlusSquare />
+          </button>
+
+          <button
+            type="button"
+            className="AskStellarPanel__iconButton"
+            onClick={onClose}
+            aria-label="Close Ask Stellar"
+          >
+            <Icon.X />
+          </button>
+        </div>
       </div>
 
       <div className="AskStellarPanel__messages" ref={scrollEl}>
         {messages.map((message, idx) => {
-          // Each answer carries its own actions, so they follow every reply
-          // rather than only the last one.
+          const isAnswered = idx < answeredCount;
           const reply = getMockAskStellarReply(message);
 
           return (
@@ -116,32 +156,50 @@ export const AskStellarPanel = ({
                 </Text>
               </div>
 
-              <div className="AskStellarPanel__bubble" data-from="assistant">
-                <Text as="div" size="sm">
-                  {reply.body}
-                </Text>
-              </div>
+              {isAnswered ? (
+                <>
+                  {/* No bubble: the assistant is the panel's own voice, so it
+                      reads as body copy rather than as a message from someone
+                      else. */}
+                  <div className="AskStellarPanel__reply">
+                    <Text as="div" size="sm">
+                      {reply.body}
+                    </Text>
+                  </div>
 
-              <div className="AskStellarPanel__actions">
-                {reply.actions.map((action) => (
-                  <Button
-                    key={action.id}
-                    size="md"
-                    variant={action.variant}
-                    icon={<Icon.ArrowUpRight />}
-                    iconPosition="right"
-                    onClick={() => {
-                      if (action.url) {
-                        openUrl(action.url);
-                      } else if (action.route) {
-                        router.push(action.route);
-                      }
-                    }}
-                  >
-                    {action.label}
-                  </Button>
-                ))}
-              </div>
+                  <div className="AskStellarPanel__actions">
+                    {reply.actions.map((action) => (
+                      <Button
+                        key={action.id}
+                        size="md"
+                        // Always tertiary — no primary action inside the panel.
+                        variant="tertiary"
+                        icon={<Icon.ArrowUpRight />}
+                        iconPosition="right"
+                        onClick={() => {
+                          if (action.url) {
+                            openUrl(action.url);
+                          } else if (action.route) {
+                            router.push(action.route);
+                          }
+                        }}
+                      >
+                        {action.label}
+                      </Button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div
+                  className="AskStellarPanel__typing"
+                  role="status"
+                  aria-label="Ask Stellar is replying"
+                >
+                  <span />
+                  <span />
+                  <span />
+                </div>
+              )}
             </div>
           );
         })}
@@ -151,7 +209,7 @@ export const AskStellarPanel = ({
         <input
           type="text"
           className="AskStellarPanel__composerInput"
-          placeholder="Ask Stellar"
+          placeholder="Ask a follow-up…"
           aria-label="Ask a follow-up question"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}

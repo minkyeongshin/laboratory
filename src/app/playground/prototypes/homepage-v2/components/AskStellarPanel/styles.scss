@@ -1,5 +1,19 @@
 @use "../../../../../../styles/utils.scss" as *;
 
+@keyframes AskStellarPanel-typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(#{pxToRem(-2px)});
+  }
+}
+
 .AskStellarPanel {
   position: fixed;
   // Clears the pill below it: 24px inset + the pill's 32px + a 12px gap. The
@@ -14,8 +28,11 @@
   display: flex;
   flex-direction: column;
   width: pxToRem(414px);
-  height: pxToRem(640px);
-  max-height: calc(100vh - #{pxToRem(92px)});
+  // Height follows content between a 320px floor and a 640px ceiling, then the
+  // message list scrolls internally.
+  height: auto;
+  min-height: pxToRem(320px);
+  max-height: min(#{pxToRem(640px)}, calc(100vh - #{pxToRem(92px)}));
 
   background-color: var(--sds-clr-gray-01);
   border: 1px solid var(--sds-clr-gray-06);
@@ -41,6 +58,12 @@
     display: flex;
     align-items: center;
     gap: pxToRem(4px);
+  }
+
+  &__headerActions {
+    display: flex;
+    align-items: center;
+    gap: pxToRem(8px);
   }
 
   // Same fixed gradient as the Ask Stellar block on the page, kept for
@@ -110,31 +133,62 @@
     gap: pxToRem(16px);
   }
 
-  &__bubble {
+  // Only the user gets a bubble. The assistant is the panel's own voice, so it
+  // reads as body copy rather than as a message from someone else.
+  &__bubble[data-from="user"] {
+    align-self: flex-end;
+    max-width: 85%;
     padding: pxToRem(8px) pxToRem(12px);
     border-radius: pxToRem(16px);
+    background-color: var(--sds-clr-lilac-03);
+    color: var(--sds-clr-gray-12);
+    text-align: center;
+  }
+
+  &__reply {
+    align-self: stretch;
     color: var(--sds-clr-gray-12);
     // Preserve the reply's line breaks.
     white-space: pre-wrap;
-
-    &[data-from="user"] {
-      align-self: flex-end;
-      max-width: 85%;
-      background-color: var(--sds-clr-lilac-03);
-      text-align: center;
-    }
-
-    &[data-from="assistant"] {
-      align-self: stretch;
-      background-color: var(--sds-clr-gray-03);
-    }
   }
 
   &__actions {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
+    align-items: center;
     gap: pxToRem(8px);
+  }
+
+  // Three dots while the reply is "in flight". A keyframe rather than a
+  // transition because there is no state change to transition between.
+  &__typing {
+    display: flex;
+    align-items: center;
+    gap: pxToRem(4px);
+    padding: pxToRem(6px) 0;
+
+    span {
+      width: pxToRem(6px);
+      height: pxToRem(6px);
+      border-radius: 50%;
+      background-color: var(--sds-clr-gray-09);
+      animation: AskStellarPanel-typing 1.2s ease-in-out infinite;
+
+      &:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+
+      &:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      span {
+        animation: none;
+        opacity: 0.5;
+      }
+    }
   }
 
   &__composer {

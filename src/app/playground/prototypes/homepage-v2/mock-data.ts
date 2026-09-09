@@ -176,7 +176,6 @@ export const mockSaveAndShare = {
 export type AskStellarAction = {
   id: string;
   label: string;
-  variant: "secondary" | "tertiary";
   route?: string;
   url?: string;
 };
@@ -206,13 +205,11 @@ export const mockAskStellarReplies: Record<string, AskStellarReply> = {
       {
         id: "deploy",
         label: "Deploy contract",
-        variant: "secondary",
         route: Routes.SMART_CONTRACTS_DEPLOY_CONTRACT,
       },
       {
         id: "contract-docs",
         label: "Contract docs",
-        variant: "tertiary",
         url: "https://developers.stellar.org/docs/build/smart-contracts",
       },
     ],
@@ -229,13 +226,11 @@ export const mockAskStellarReplies: Record<string, AskStellarReply> = {
       {
         id: "view-xdr",
         label: "View XDR",
-        variant: "secondary",
         route: Routes.VIEW_XDR,
       },
       {
         id: "xdr-docs",
         label: "XDR docs",
-        variant: "tertiary",
         url: "https://developers.stellar.org/docs/learn/fundamentals/data-format/xdr",
       },
     ],
@@ -252,13 +247,11 @@ export const mockAskStellarReplies: Record<string, AskStellarReply> = {
       {
         id: "dashboard",
         label: "Transaction dashboard",
-        variant: "secondary",
         route: Routes.TRANSACTION_DASHBOARD,
       },
       {
         id: "result-codes",
         label: "Result codes",
-        variant: "tertiary",
         url: "https://developers.stellar.org/docs/data/apis/horizon/api-reference/errors/result-codes",
       },
     ],

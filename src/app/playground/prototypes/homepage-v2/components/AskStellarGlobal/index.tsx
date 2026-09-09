@@ -19,8 +19,17 @@ import { useAskStellarStore } from "../../store/askStellarStore";
  */
 export const AskStellarGlobal = () => {
   const [isMounted, setIsMounted] = useState(false);
-  const { messages, isOpen, hasVisitedPrototype, ask, close, toggle } =
-    useAskStellarStore();
+  const {
+    messages,
+    answeredCount,
+    isOpen,
+    hasVisitedPrototype,
+    ask,
+    markAnswered,
+    reset,
+    close,
+    toggle,
+  } = useAskStellarStore();
 
   useEffect(() => {
     setIsMounted(true);
@@ -33,7 +42,14 @@ export const AskStellarGlobal = () => {
   return (
     <>
       {isOpen ? (
-        <AskStellarPanel messages={messages} onSend={ask} onClose={close} />
+        <AskStellarPanel
+          messages={messages}
+          answeredCount={answeredCount}
+          onSend={ask}
+          onAnswered={markAnswered}
+          onReset={reset}
+          onClose={close}
+        />
       ) : null}
 
       <AskStellarPill isPanelOpen={isOpen} onClick={toggle} />
