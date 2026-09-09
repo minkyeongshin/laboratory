@@ -34,6 +34,17 @@ the Ask Stellar conversation's persistence mechanics.
 - **The Save & share art is a flat PNG**, not a component — see §6.
 - No analytics, no Sentry, no wallet interaction.
 
+**Demo deployment convenience.** `vercel.json` at the repo root redirects `/` to
+this prototype, so on the demo site the sidebar's "Introduction" item and the
+logo land here rather than on the old home. It is a **307 (temporary)**, not a
+308, so browsers don't cache it once the demo goes away.
+
+Only Vercel reads `vercel.json`. Local `pnpm dev` and the production Lab (Docker
+/ Next standalone) both ignore it — the file ships in the repo and the image but
+nothing there reads it. **Delete it when the demo is done**; if this prototype
+is ever promoted, the redirect is not the mechanism — the page moves to
+`src/app/page.tsx` instead (see §4).
+
 ---
 
 ## 2. Ask Stellar — behaviour as built
