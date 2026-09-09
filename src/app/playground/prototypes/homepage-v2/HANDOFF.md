@@ -144,13 +144,30 @@ product from asking it from the homepage. The prototype sends nothing.
 **[PRODUCT DECISION] Auth — who can use it.** Anonymous visitors? Wallet
 connected only? Rate limited by IP or by account? Not modelled at all.
 
-**[PRODUCT DECISION] Does the panel overlay content, or push it aside?** Today
-it is a fixed overlay in the bottom-right corner, floating above whatever page
-you are on. The alternative is a docked rail that reflows the page. Overlay was
-never chosen — it is simply what a prototype does most cheaply. It matters
-because Ask Stellar is meant to be usable *while* working: an overlay covers
-part of the form you are asking about, and on a transaction page that may be
-exactly the part you need to see.
+**[PRODUCT DECISION] Panel: overlay (current) vs push.**
+
+Today it is a fixed overlay in the bottom-right corner, floating above whatever
+page you are on. Overlay was never chosen — it is what a prototype does most
+cheaply.
+
+**Push only works if the left sidebar collapses to an icon rail when the panel
+opens** (296 → 64px). Without that, the content column is squeezed to roughly:
+
+| viewport | sidebar 296 | rail 64 |
+|---|---|---|
+| 1440 | **706px** | 938px |
+| 1280 | **546px** | 778px |
+
+(414px panel + its 24px gutter.) Against a content column designed at **960px**,
+706 is unworkable and 546 is not a layout at all. Even with the rail, **1280
+stays cramped** at 778 — so push would need a viewport breakpoint that falls
+back to overlay on narrow screens, i.e. both behaviours built, not one.
+
+**Decide from observed use, not from taste:** if people keep the panel open
+while working, push is worth that cost; if they close it after each answer,
+overlay is correct and cheaper. The prototype cannot answer this — it has no
+analytics and its replies are canned, so nobody uses it the way they would use
+a real assistant.
 
 **[DESIGNER TO FILL] Mobile and responsive behaviour.** The panel is a
 fixed 414×640 box with one invented breakpoint (full-bleed under 560px). There
