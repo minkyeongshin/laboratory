@@ -207,6 +207,34 @@ treatment. (Measured: 16px box-to-box, 19px from the title's text baseline.)
   already on the page, adds no height, and gives the widest columns of any
   option tried.
 
+### Ask Stellar block — final form
+
+A **compose box**, not an input: ~88px (two lines), textarea, with the "Ask"
+pill inside at the bottom-right — always visible, disabled until there is text.
+Enter sends, Shift+Enter breaks a line. Chips sit below.
+
+Chrome is **neutral**: 1px `gray-06` border and a soft two-layer shadow
+(`0 1px 2px` / `0 4px 12px` at 4%). Focus adds a **2px `lilac-09` ring**, drawn
+with `box-shadow` rather than a thicker border so nothing reflows. The **sparkle
+lives inside the box** at 20px `lilac-11`, top-left, 12px before the text, and
+the placeholder — "Ask Stellar anything…" — carries the feature name. There is
+no label row.
+
+**The 3px gradient border and the gradient-filled label from Figma were
+removed.** On the original 44px field the gradient read as an accent; on a 120px
+box it became a frame, and the block started competing with the page instead of
+sitting in it. **Purple now appears in exactly three places: the sparkle, the
+focus ring, and the pill's sparkle and label.**
+
+**The Figma file still shows the gradient treatment and needs updating to
+match.** Two earlier rounds were spent recovering that gradient from a flattened
+export (`#544a89` is the ramp sampled at the stroke's midpoint, not a chosen
+colour) — worth knowing before anyone reinstates it from the file.
+
+The **pill follows the field**: white, 1px `gray-06`, `lilac-11` sparkle and
+label. It reads as the field's minimised sibling because they share chrome, not
+because they share an accent.
+
 ### Action icons — internal vs external
 
 **Page-wide convention: `Icon.ArrowRight` (→) for anything that stays in the
@@ -285,17 +313,8 @@ strokes on the same ramp. See the Ask Stellar notes above.
 
 Per `rules/02-styling.md`, gaps flagged rather than worked around:
 
-- **Ask Stellar is off-token by design**, confirmed with the designer: a 3px
-  gradient stroke, 24px radius, and a gradient-filled label. SDS `Input` was not
-  used because none of its chrome survives the overrides.
-  - An earlier note here called the border a solid `#544a89`. That was wrong:
-    the stroke is a gradient in Figma, and the MCP export flattens it because a
-    CSS `border` cannot take one. `#544a89` is that ramp sampled at the stroke's
-    midpoint — sampling `rgb(141,124,226) → rgb(36,29,73)` at 54% (the visible
-    span, given stops at 33.9% and 155.4%) gives `rgb(84,73,143)` against the
-    export's `rgb(84,74,137)`. Nobody chose that colour. It is now drawn as a
-    real gradient via the padding-box/border-box background trick, so **no raw
-    hex is left in the prototype.**
+- **Ask Stellar diverges from the Figma export deliberately** — see the pattern
+  entry above. SDS `Input` is still not used: none of its chrome survives.
 - **SDS line-heights run 2px looser than Figma** on body text — `Text size="sm"`
   is 14/22 against Figma's 14/20, `size="xs"` is 12/20 against 12/18. Tokens
   used as-is; cards are a few px taller than the comps.

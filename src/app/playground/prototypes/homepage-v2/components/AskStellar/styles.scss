@@ -2,74 +2,70 @@
 
 .AskStellar {
   // Full column. The Figma constrained this block to 560px; widening it makes
-  // the input the widest element in the hero rather than the narrowest.
+  // the field the widest element in the hero rather than the narrowest.
   width: 100%;
   max-width: pxToRem(960px);
 
-  &__label {
-    display: flex;
-    align-items: center;
-    gap: pxToRem(4px);
-  }
-
-  // Off-token by design (confirmed with designer): gradient-filled label text.
-  // No SDS mechanism for this, hence background-clip rather than a colour token.
-  &__labelText {
-    font-size: pxToRem(16px);
-    line-height: pxToRem(24px);
-    font-weight: var(--sds-fw-semi-bold);
-    background-image: linear-gradient(
-      248.12deg,
-      rgb(141 124 226) 33.934%,
-      rgb(36 29 73) 155.41%
-    );
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-  }
-
-  // Off-token by design: a 3px gradient stroke at a 24px radius. SDS inputs are
-  // 1px solid at a fixed radius and expose neither.
-  //
-  // The stroke is a gradient in Figma, using the same ramp as the label above.
-  // The MCP export flattens it to a solid #544a89 because a CSS `border` can't
-  // take a gradient — that value is the ramp sampled at the stroke's midpoint,
-  // not a colour anyone chose.
-  //
-  // Two backgrounds make it work: the fill is clipped to padding-box and the
-  // gradient to border-box, so the transparent 3px border becomes the window
-  // the gradient shows through. Radius and width both survive.
+  // Neutral chrome: a grey edge lifted by a soft two-layer shadow. The 3px
+  // gradient stroke from the Figma export is gone — see README. Focus adds a
+  // 2px lilac-09 ring drawn with box-shadow, so the border never changes width
+  // and nothing reflows.
   &__field {
     display: flex;
-    align-items: center;
-    gap: pxToRem(8px);
-    height: pxToRem(44px);
-    padding: pxToRem(8px) pxToRem(8px) pxToRem(8px) pxToRem(20px);
-    border: 3px solid transparent;
+    flex-direction: column;
+    min-height: pxToRem(88px);
+    padding: pxToRem(16px);
+    background-color: var(--sds-clr-gray-01);
+    border: 1px solid var(--sds-clr-gray-06);
     border-radius: pxToRem(24px);
-    background-image:
-      linear-gradient(
-        var(--sds-clr-gray-01),
-        var(--sds-clr-gray-01)
-      ),
-      linear-gradient(
-        248.12deg,
-        rgb(141 124 226) 33.934%,
-        rgb(36 29 73) 155.41%
-      );
-    background-origin: border-box;
-    background-clip: padding-box, border-box;
+    box-shadow:
+      0 pxToRem(1px) pxToRem(2px) rgb(0 0 0 / 4%),
+      0 pxToRem(4px) pxToRem(12px) rgb(0 0 0 / 4%);
+    transition: box-shadow 0.15s ease;
+
+    &:focus-within {
+      box-shadow: 0 0 0 pxToRem(2px) var(--sds-clr-lilac-09);
+    }
+  }
+
+  &__composeRow {
+    display: flex;
+    align-items: flex-start;
+    gap: pxToRem(12px);
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  // Masked rather than an <img>: the source SVG carries its own gradient fill,
+  // so it can't be recoloured to lilac-11 as an image.
+  &__sparkle {
+    flex-shrink: 0;
+    width: pxToRem(20px);
+    height: pxToRem(20px);
+    // Nudge onto the placeholder's cap height.
+    margin-top: pxToRem(2px);
+    background-color: var(--sds-clr-lilac-11);
+    mask-image: url("../../assets/ask-stellar-sparkle.svg");
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-image: url("../../assets/ask-stellar-sparkle.svg");
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
   }
 
   &__input {
     flex: 1 1 auto;
     min-width: 0;
+    width: 100%;
+    resize: none;
     border: none;
     outline: none;
     background: transparent;
     font-family: inherit;
-    font-size: pxToRem(14px);
-    line-height: pxToRem(20px);
+    font-size: pxToRem(16px);
+    line-height: pxToRem(24px);
     color: var(--sds-clr-gray-12);
 
     &::placeholder {
@@ -77,7 +73,13 @@
     }
   }
 
-  // Chips, left-aligned under the input, wrapping when the row runs out.
+  &__fieldFooter {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: pxToRem(8px);
+  }
+
+  // Chips, left-aligned under the field, wrapping when the row runs out.
   &__suggestions {
     list-style: none;
     margin: 0;
@@ -96,7 +98,7 @@
   }
 
   // Suggestion chip — 40px, weight 500, 8/12 padding. Intentionally NOT SDS
-  // Button (32/600): chips fill the input rather than navigate, and must read
+  // Button (32/600): chips fill the field rather than navigate, and must read
   // differently from the action buttons elsewhere on the page. If this pattern
   // appears on a second surface, propose it to SDS.
   //

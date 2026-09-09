@@ -7,11 +7,10 @@ import "./styles.scss";
 // where it was parked on the canvas, so "fixed to the bottom" is the designer's
 // call, not the artboard's.
 //
-// Local rather than SDS <Button> because of the 3px GRADIENT border. SDS drives
-// its border from a single --Button-color-border-* custom property, so it can
-// only take a solid colour; a gradient stroke needs the padding-box/border-box
-// background trick. (An earlier version of this comment blamed the label — that
-// was wrong. The label is solid lilac-11; the gradient is on the border.)
+// Local rather than SDS <Button> because the label and icon are lilac-11 on a
+// white pill with a gray-06 edge — a combination no SDS variant has. It mirrors
+// the Ask Stellar field: neutral chrome, colour carried only by the sparkle and
+// the label.
 //
 // On the home page this is the minimised state of the chat panel: it appears
 // once a conversation exists and toggles the panel open and closed. The panel

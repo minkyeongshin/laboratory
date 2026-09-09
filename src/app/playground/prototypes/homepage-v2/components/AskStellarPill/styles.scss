@@ -10,34 +10,18 @@
   display: inline-flex;
   align-items: center;
   gap: pxToRem(4px);
-  // The stroke is OUTSIDE the 117x32 frame, so the visual box is 123x38. The
-  // app sets border-box globally; content-box is what puts the 3px border
-  // outside the padding rather than eating into it.
-  //
-  // Padding and line-height are the node's own: Label sits at y=6 in a 32-tall
-  // frame and is 20 tall, so 6/12 with a 20px line-height — not 8/12 with 16,
-  // which happens to give the same 32 but isn't what the node says.
-  box-sizing: content-box;
-  padding: pxToRem(6px) pxToRem(12px);
-
-  // The small sibling of the Ask Stellar input: same 3px gradient stroke, same
-  // ramp, same padding-box/border-box treatment. The MCP export flattens it to
-  // a solid #544a89 because a CSS `border` can't take a gradient — that value
-  // is the ramp sampled at the stroke's midpoint, not a colour anyone chose.
-  border: 3px solid transparent;
-  // Fully rounded, against the input's 24px — the pill's radius is a pill.
+  // 5/12 padding + a 20px line-height + the 1px border = the node's 32px
+  // height. The gradient stroke is gone with both treatments, so the
+  // content-box/padding-box machinery it needed goes too.
+  box-sizing: border-box;
+  padding: pxToRem(5px) pxToRem(12px);
+  background-color: var(--sds-clr-gray-01);
+  border: 1px solid var(--sds-clr-gray-06);
+  // Fully rounded, against the field's 24px — the pill's radius is a pill.
   border-radius: pxToRem(100px);
-  background-image:
-    linear-gradient(var(--sds-clr-gray-01), var(--sds-clr-gray-01)),
-    linear-gradient(
-      248.12deg,
-      rgb(141 124 226) 33.934%,
-      rgb(36 29 73) 155.41%
-    );
-  background-origin: border-box;
-  background-clip: padding-box, border-box;
   box-shadow: 0 pxToRem(4px) pxToRem(10px) rgb(0 0 0 / 5%);
   cursor: pointer;
+  transition: border-color 0.15s ease;
 
   &__sparkle {
     flex-shrink: 0;
