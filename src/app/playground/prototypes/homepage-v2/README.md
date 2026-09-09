@@ -129,6 +129,18 @@ the block reads as grouped:
 
 ## Patterns
 
+### CardGrid — two variants
+
+`variant="bordered"` (default) is the boxed card row. `variant="open"` keeps the
+same column math, 1px `gray-06` gap dividers and 24px cell padding, but drops
+the outer border and radius.
+
+**Hover differs, deliberately: bordered cells hover as a whole (`gray-02`
+background); open cells have no hover background at all — the consumer decides
+what responds.** Without a card edge there is nothing for a fill to sit inside,
+so a whole-cell tint reads as a stray rectangle. Explore & inspect lights its
+tile border to `lilac-11` instead.
+
 ### Explore & inspect — column dividers
 
 Uses **`CardGrid variant="open"` — one component, two densities.** Same column

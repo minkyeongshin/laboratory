@@ -52,9 +52,14 @@
     text-decoration: none;
     cursor: pointer;
     transition: background-color 0.15s ease;
+  }
 
+  // Only bordered cells hover as a whole. Open cells deliberately have no
+  // hover background — without the card edge there is nothing to fill, so the
+  // consumer decides what responds (Explore & inspect lights its tile border).
+  &[data-variant="bordered"] {
     @media (hover: hover) {
-      &:hover {
+      .CardGrid__cell[data-is-link="true"]:hover {
         background-color: var(--sds-clr-gray-02);
       }
     }
