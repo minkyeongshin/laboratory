@@ -19,6 +19,12 @@ click from above the fold or one screen below it.
 
 Built from Figma node `9477:68721`.
 
+## Getting started
+
+Run `pnpm dev` once before `pnpm lint:ts` on a fresh clone — `next-env.d.ts` is
+gitignored and generated on first run, and without it TypeScript can't resolve
+the `.png` / `.svg` imports in `mock-data.ts` and the Ask Stellar components.
+
 ## What it doesn't cover
 
 **Nothing is wired up.**
