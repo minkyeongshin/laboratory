@@ -1,9 +1,5 @@
 "use client";
 
-import Image from "next/image";
-
-import sparkle from "../../assets/ask-stellar-sparkle-sm.svg";
-
 import "./styles.scss";
 
 // Positioning: fixed to the viewport at 24px bottom/right. The 24px comes from
@@ -11,10 +7,11 @@ import "./styles.scss";
 // where it was parked on the canvas, so "fixed to the bottom" is the designer's
 // call, not the artboard's.
 //
-// A plain <button> rather than SDS <Button>: the pill needs a gradient-filled
-// label to match the Ask Stellar block, and <Button> paints its own colour on
-// the label. Everything else here (height, radius, padding) is deliberately
-// off-token to match that block.
+// Local rather than SDS <Button> because of the 3px GRADIENT border. SDS drives
+// its border from a single --Button-color-border-* custom property, so it can
+// only take a solid colour; a gradient stroke needs the padding-box/border-box
+// background trick. (An earlier version of this comment blamed the label — that
+// was wrong. The label is solid lilac-11; the gradient is on the border.)
 //
 // On the home page this is the minimised state of the chat panel: it appears
 // once a conversation exists and toggles the panel open and closed. The panel
@@ -34,7 +31,9 @@ export const AskStellarPill = ({
     onClick={onClick}
     aria-expanded={isPanelOpen}
   >
-    <Image src={sparkle} alt="" width={16} height={16} aria-hidden="true" />
+    {/* Masked rather than an <img>: the source SVG carries its own gradient
+        fill, so it can't be recoloured to lilac-11 as an image. */}
+    <span className="AskStellarPill__sparkle" aria-hidden="true" />
     <span className="AskStellarPill__label">Ask Stellar</span>
   </button>
 );

@@ -200,10 +200,18 @@ The other two pill-shaped elements on the page:
 
 - **"Ask" button** — stock SDS `Button variant="secondary" size="md" isRounded`.
   No overrides.
-- **`AskStellarPill`** — local, because its label is gradient-filled via
-  `background-clip: text` and SDS `Button` paints its own colour over the label.
-  Its metrics still match SDS `md` (32px tall, 14px), differing only by 2px of
-  horizontal padding and a lilac border that ties it to the Ask Stellar block.
+- **`AskStellarPill`** — local, **because of its 3px gradient border.** SDS
+  drives `Button`'s border from a single `--Button-color-border-*` custom
+  property, so it can only take a solid colour; a gradient stroke needs the
+  padding-box/border-box background trick. It is the small sibling of the Ask
+  Stellar input: same 3px stroke, same ramp, same technique, differing only in
+  radius (fully round against the input's 24px).
+
+  An earlier note here blamed the *label* for blocking SDS `Button`. That was
+  wrong. The label is **solid `lilac-11` at weight 600**, as is the sparkle —
+  the gradient in this component is on the border. The MCP export flattened that
+  stroke to a solid `#544a89`, exactly as it did for the input, which is what
+  sent the first pass down the wrong path.
 
 ## Design system notes
 

@@ -9,40 +9,58 @@
 
   display: inline-flex;
   align-items: center;
-  gap: pxToRem(6px);
-  height: pxToRem(32px);
-  padding: pxToRem(6px) pxToRem(12px);
+  gap: pxToRem(4px);
+  // Figma draws the 3px stroke inside the 32px frame, so the CSS padding is the
+  // node's 6/12 minus the border to land on the same 32px height.
+  padding: pxToRem(3px) pxToRem(9px);
 
-  background-color: var(--sds-clr-gray-01);
-  border: 1px solid var(--sds-clr-lilac-06);
+  // The small sibling of the Ask Stellar input: same 3px gradient stroke, same
+  // ramp, same padding-box/border-box treatment. The MCP export flattens it to
+  // a solid #544a89 because a CSS `border` can't take a gradient — that value
+  // is the ramp sampled at the stroke's midpoint, not a colour anyone chose.
+  border: 3px solid transparent;
+  // Fully rounded, against the input's 24px — the pill's radius is a pill.
   border-radius: pxToRem(100px);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-
-  img {
-    flex-shrink: 0;
-  }
-
-  // Matches the Ask Stellar block's label. Off-token by design.
-  &__label {
-    font-size: pxToRem(14px);
-    line-height: pxToRem(20px);
-    font-weight: var(--sds-fw-medium);
-    background-image: linear-gradient(
+  background-image:
+    linear-gradient(var(--sds-clr-gray-01), var(--sds-clr-gray-01)),
+    linear-gradient(
       248.12deg,
       rgb(141 124 226) 33.934%,
       rgb(36 29 73) 155.41%
     );
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: 0 pxToRem(4px) pxToRem(10px) rgb(0 0 0 / 5%);
+  cursor: pointer;
+
+  &__sparkle {
+    flex-shrink: 0;
+    width: pxToRem(16px);
+    height: pxToRem(16px);
+    background-color: var(--sds-clr-lilac-11);
+    mask-image: url("../../assets/ask-stellar-sparkle-sm.svg");
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-image: url("../../assets/ask-stellar-sparkle-sm.svg");
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+  }
+
+  // Solid lilac-11, not a gradient — the gradient in this component is the
+  // border.
+  &__label {
+    font-size: pxToRem(14px);
+    line-height: pxToRem(20px);
+    font-weight: var(--sds-fw-semi-bold);
+    color: var(--sds-clr-lilac-11);
     white-space: nowrap;
   }
 
   @media (hover: hover) {
     &:hover {
-      border-color: var(--sds-clr-lilac-08);
+      box-shadow: 0 pxToRem(4px) pxToRem(12px) rgb(0 0 0 / 12%);
     }
   }
 }
