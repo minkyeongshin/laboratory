@@ -56,7 +56,8 @@ export const LearnByBuilding = ({ imgTheme }: { imgTheme: ImgTheme }) => (
       <Button
         size="md"
         variant="tertiary"
-        icon={<Icon.ArrowRight />}
+        // External: the playlist is on YouTube.
+        icon={<Icon.LinkExternal01 />}
         iconPosition="right"
         onClick={() => openUrl(TUTORIALS_PLAYLIST_URL)}
       >

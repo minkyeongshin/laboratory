@@ -7,6 +7,7 @@ import { Button, Icon, Text } from "@stellar/design-system";
 
 import { openUrl } from "@/helpers/openUrl";
 
+import { PanelIconButton } from "../PanelIconButton";
 import { getMockAskStellarReply } from "../../mock-data";
 import sparkle from "../../assets/ask-stellar-sparkle.svg";
 
@@ -29,7 +30,6 @@ export const AskStellarPanel = ({
   answeredCount,
   onSend,
   onAnswered,
-  onReset,
   onClose,
 }: {
   /** User messages, oldest first. Each is answered by the canned reply. */
@@ -38,7 +38,6 @@ export const AskStellarPanel = ({
   answeredCount: number;
   onSend: (text: string) => void;
   onAnswered: () => void;
-  onReset: () => void;
   onClose: () => void;
 }) => {
   const [draft, setDraft] = useState("");
@@ -117,30 +116,11 @@ export const AskStellarPanel = ({
           <span className="AskStellarPanel__titleText">Ask Stellar</span>
         </div>
 
-        <div className="AskStellarPanel__headerActions">
-          {/* Native title rather than SDS <Tooltip>: Floater clones its trigger
-              with `onClick: toggleFloater`, which overwrites the trigger's own
-              handler — so a Tooltip trigger cannot also be an action button.
-              Raised in HANDOFF as an SDS gap. */}
-          <button
-            type="button"
-            className="AskStellarPanel__iconButton"
-            onClick={onReset}
-            aria-label="New conversation"
-            title="New conversation"
-          >
-            <Icon.MessagePlusSquare />
-          </button>
-
-          <button
-            type="button"
-            className="AskStellarPanel__iconButton"
-            onClick={onClose}
-            aria-label="Close Ask Stellar"
-          >
-            <Icon.X />
-          </button>
-        </div>
+        <PanelIconButton
+          icon={<Icon.X />}
+          label="Close Ask Stellar"
+          onClick={onClose}
+        />
       </div>
 
       <div className="AskStellarPanel__messages" ref={scrollEl}>
@@ -174,7 +154,14 @@ export const AskStellarPanel = ({
                         size="md"
                         // Always tertiary — no primary action inside the panel.
                         variant="tertiary"
-                        icon={<Icon.ArrowUpRight />}
+                        // Convention: -> internal route, external link.
+                        icon={
+                          action.url ? (
+                            <Icon.LinkExternal01 />
+                          ) : (
+                            <Icon.ArrowRight />
+                          )
+                        }
                         iconPosition="right"
                         onClick={() => {
                           if (action.url) {
@@ -215,14 +202,12 @@ export const AskStellarPanel = ({
           onChange={(e) => setDraft(e.target.value)}
         />
 
-        <button
+        <PanelIconButton
           type="submit"
-          className="AskStellarPanel__iconButton"
-          aria-label="Send"
+          icon={<Icon.Send03 />}
+          label="Send"
           disabled={!draft.trim()}
-        >
-          <Icon.Send03 />
-        </button>
+        />
       </form>
     </div>
   );

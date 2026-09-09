@@ -36,8 +36,6 @@ type AskStellarState = {
   ask: (query: string) => void;
   /** Reveal the reply for everything asked so far. */
   markAnswered: () => void;
-  /** Clear the conversation and close. The pill goes with it. */
-  reset: () => void;
   close: () => void;
   toggle: () => void;
   markPrototypeVisited: () => void;
@@ -58,7 +56,6 @@ export const useAskStellarStore = create<AskStellarState>()(
         })),
       markAnswered: () =>
         set((state) => ({ answeredCount: state.messages.length })),
-      reset: () => set({ messages: [], answeredCount: 0, isOpen: false }),
       close: () => set({ isOpen: false }),
       toggle: () => set((state) => ({ isOpen: !state.isOpen })),
       markPrototypeVisited: () => set({ hasVisitedPrototype: true }),

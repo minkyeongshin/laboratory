@@ -1,0 +1,33 @@
+@use "../../../../../../styles/utils.scss" as *;
+
+// 28px square used by the Ask Stellar panel's close and send controls.
+.PanelIconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: pxToRem(28px);
+  height: pxToRem(28px);
+  background-color: var(--sds-clr-gray-01);
+  border: 1px solid var(--sds-clr-gray-06);
+  border-radius: pxToRem(4px);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  svg {
+    width: pxToRem(12px);
+    height: pxToRem(12px);
+    color: var(--sds-clr-gray-11);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  @media (hover: hover) {
+    &:not(:disabled):hover {
+      background-color: var(--sds-clr-gray-03);
+    }
+  }
+}

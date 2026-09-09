@@ -26,7 +26,6 @@ export const AskStellarGlobal = () => {
     hasVisitedPrototype,
     ask,
     markAnswered,
-    reset,
     close,
     toggle,
   } = useAskStellarStore();
@@ -47,7 +46,6 @@ export const AskStellarGlobal = () => {
           answeredCount={answeredCount}
           onSend={ask}
           onAnswered={markAnswered}
-          onReset={reset}
           onClose={close}
         />
       ) : null}

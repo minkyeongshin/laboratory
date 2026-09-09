@@ -207,6 +207,19 @@ treatment. (Measured: 16px box-to-box, 19px from the title's text baseline.)
   already on the page, adds no height, and gives the widest columns of any
   option tried.
 
+### Action icons — internal vs external
+
+**Page-wide convention: `Icon.ArrowRight` (→) for anything that stays in the
+Lab, `Icon.LinkExternal01` (↗) for anything that leaves it.** The icon is
+*derived*, never configured per action — in the Ask Stellar panel and the
+Network cards it comes straight from the data (`url` → external, `route` →
+internal), so a new action cannot pick the wrong one.
+
+Applied everywhere, not just where it was noticed: Start building and "View
+saved" are internal (→); Quickstart, Stellar CLI and "View all tutorials" leave
+for GitHub and YouTube (↗). The last three used → until the convention was
+written down.
+
 ### Suggestion chip
 
 **40px, weight 500, 8/12 padding. Intentionally NOT SDS `Button` (32/600):**

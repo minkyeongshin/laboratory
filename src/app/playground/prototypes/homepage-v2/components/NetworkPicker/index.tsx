@@ -64,7 +64,15 @@ export const NetworkPicker = () => {
                     key={`${item.id}-${action.label}`}
                     size="md"
                     variant="tertiary"
-                    icon={<Icon.ArrowRight />}
+                    // Convention: -> internal, external. Quickstart and
+                    // Stellar CLI leave the app; Switch does not.
+                    icon={
+                      action.url ? (
+                        <Icon.LinkExternal01 />
+                      ) : (
+                        <Icon.ArrowRight />
+                      )
+                    }
                     iconPosition="right"
                     onClick={() => {
                       if (action.url) {

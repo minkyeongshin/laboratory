@@ -60,11 +60,6 @@
     gap: pxToRem(4px);
   }
 
-  &__headerActions {
-    display: flex;
-    align-items: center;
-    gap: pxToRem(8px);
-  }
 
   // Same fixed gradient as the Ask Stellar block on the page, kept for
   // consistency. Off-token by design, and carries the same dark-mode
@@ -83,37 +78,6 @@
     color: transparent;
   }
 
-  // 28px square button used by both the header close and the composer send.
-  &__iconButton {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: pxToRem(28px);
-    height: pxToRem(28px);
-    background-color: var(--sds-clr-gray-01);
-    border: 1px solid var(--sds-clr-gray-06);
-    border-radius: pxToRem(4px);
-    cursor: pointer;
-    transition: background-color 0.15s ease;
-
-    svg {
-      width: pxToRem(12px);
-      height: pxToRem(12px);
-      color: var(--sds-clr-gray-11);
-    }
-
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.5;
-    }
-
-    @media (hover: hover) {
-      &:not(:disabled):hover {
-        background-color: var(--sds-clr-gray-03);
-      }
-    }
-  }
 
   &__messages {
     flex: 1 1 auto;
@@ -204,7 +168,7 @@
     border-radius: pxToRem(16px);
 
     // Send button sits bottom-right inside the box.
-    .AskStellarPanel__iconButton {
+    .PanelIconButton {
       align-self: flex-end;
       margin-top: auto;
     }

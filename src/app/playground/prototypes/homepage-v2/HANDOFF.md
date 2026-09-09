@@ -132,10 +132,15 @@ pending state, no failure state, no "you've hit a limit" state, and no first-run
 empty state — the panel only ever opens with content already in it. All four
 need designs.
 
-**[PRODUCT DECISION] History limits and a "new conversation" affordance.**
-History currently grows without bound and there is **no way to start a fresh
-conversation short of closing the tab.** Needs a decision on a cap, and on
-whether a reset control appears (the natural spot is beside the close X).
+**[PRODUCT DECISION] History limits.** History currently grows without bound.
+Needs a decision on a cap, and on what happens at it — drop the oldest, or
+refuse and prompt for a new conversation.
+
+**Resetting is deliberately not a control.** A "New conversation" button was
+built and then removed: it was not in the Figma design, and **closing the tab is
+the reset** — sessionStorage clears with it. Revisit only if history gains a cap
+or if conversations start outliving the tab, either of which would leave no way
+to start fresh.
 
 **[PRODUCT DECISION] Whether current-page context is sent with a question.**
 Asking "why did this fail?" from `/transaction/submit` is a very different
