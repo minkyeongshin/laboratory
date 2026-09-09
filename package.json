@@ -21,7 +21,8 @@
     "prepare": "husky",
     "pre-commit": "pnpm lint-staged",
     "pre-push": "pnpm lint:ts && pnpm test:e2e && pnpm test:unit",
-    "playwright-ui": "npx playwright test --ui"
+    "playwright-ui": "npx playwright test --ui",
+    "playground:audit": "node src/app/playground/design-system/audits/run-all.cjs"
   },
   "dependencies": {
     "@amplitude/analytics-browser": "^2.20.1",

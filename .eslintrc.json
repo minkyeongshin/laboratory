@@ -11,5 +11,16 @@
     "@typescript-eslint/no-explicit-any": "off",
     "import/named": "off"
   },
+  "overrides": [
+    {
+      // Playground audit scripts: standalone CommonJS run under Node, not part
+      // of the app bundle. The app's browser/ESM assumptions don't apply.
+      "files": ["src/app/playground/design-system/audits/**/*.cjs"],
+      "env": { "node": true, "es2022": true },
+      "rules": {
+        "@typescript-eslint/no-require-imports": "off"
+      }
+    }
+  ],
   "ignorePatterns": ["./src/temp/stellar-xdr-web/*"]
 }
