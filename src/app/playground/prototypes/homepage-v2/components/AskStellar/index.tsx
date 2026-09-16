@@ -10,16 +10,16 @@ import { mockAskStellarSuggestions } from "../../mock-data";
 import "./styles.scss";
 
 // A compose box rather than an input: two lines of room, with the Ask pill
-// parked inside at the bottom-right. There is no label row — the sparkle sits
-// inside the box and the placeholder carries the feature name.
+// parked inside at the bottom-right. There is no label row — the placeholder
+// carries the feature name.
 //
 // SDS <Input> is not used because none of its chrome survives: it renders a 1px
 // border at a fixed radius with its own label placement, and this needs a
-// textarea, an inner icon and an inner action. Overriding all of that would
-// leave nothing of the component but its ref handling.
+// textarea and an inner action. Overriding all of that would leave nothing of
+// the component but its ref handling.
 //
-// The "Ask" button is SDS: variant="secondary" is bg gray-12 with base-00 text,
-// and isRounded sets radius to height/2.
+// The "Start" button is SDS: variant="secondary" is bg gray-12 with base-00
+// text, and isRounded sets radius to height/2.
 
 export const AskStellar = ({
   onSubmit,
@@ -46,12 +46,10 @@ export const AskStellar = ({
         }}
       >
         <div className="AskStellar__composeRow">
-          <span className="AskStellar__sparkle" aria-hidden="true" />
-
           <textarea
             className="AskStellar__input"
-            placeholder="Ask Stellar anything…"
-            aria-label="Ask Stellar anything"
+            placeholder="What are you building?"
+            aria-label="What are you building?"
             value={value}
             rows={2}
             onChange={(e) => setValue(e.target.value)}
@@ -76,7 +74,7 @@ export const AskStellar = ({
             iconPosition="right"
             disabled={!hasText}
           >
-            Ask
+            Start
           </Button>
         </div>
       </form>

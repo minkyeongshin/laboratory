@@ -1,5 +1,18 @@
 @use "../../../../../../styles/utils.scss" as *;
 
+// Placement and the drop shadow. Every other property the pill used to declare
+// by hand — padding, background, border, radius, gap, type, hover — now comes
+// from SDS <Button variant="tertiary" size="lg" isRounded>.
+//
+// The shadow lives on this wrapper, never on the Button: SDS composes the
+// focus ring out of the Button's box-shadow (--Button-box-shadow-size flips to
+// 0.25rem on :focus), so declaring box-shadow there would replace the ring
+// outright.
+//
+// Deliberately lighter and tighter than .AskStellarPanel's 0 4px 20px at 10%:
+// the pill is a small, persistent control floating over page content, where a
+// wide diffuse shadow smears across whatever it covers. The panel is a large
+// surface that can carry the heavier one. The two are not meant to match.
 .AskStellarPill {
   position: fixed;
   bottom: pxToRem(24px);
@@ -7,55 +20,61 @@
   // Above page content, below SDS modals and float notifications.
   z-index: 10;
 
-  display: inline-flex;
-  align-items: center;
-  gap: pxToRem(4px);
-  // 5/12 padding + a 20px line-height + the 1px border = the node's 32px
-  // height. The gradient stroke is gone with both treatments, so the
-  // content-box/padding-box machinery it needed goes too.
-  box-sizing: border-box;
-  padding: pxToRem(5px) pxToRem(12px);
-  background-color: var(--sds-clr-gray-01);
-  border: 1px solid var(--sds-clr-gray-06);
-  // Fully rounded, against the field's 24px — the pill's radius is a pill.
+  // The wrapper shrink-wraps the Button, but its corners are square, so the
+  // shadow would halo a rectangle around a pill without this. 100px clamps to
+  // half the height — the same shape isRounded gives the Button itself.
   border-radius: pxToRem(100px);
-  // Matches the field's hairline rather than the export's 0 4px 10px: the two
-  // read as the same object, and nothing else on the page is elevated.
-  box-shadow: 0 pxToRem(1px) pxToRem(2px) rgb(0 0 0 / 3%);
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+  box-shadow: 0 pxToRem(4px) pxToRem(10px) rgb(0 0 0 / 5%);
 
-  &__sparkle {
-    flex-shrink: 0;
-    width: pxToRem(16px);
-    height: pxToRem(16px);
-    background-color: var(--sds-clr-lilac-11);
-    mask-image: url("../../assets/ask-stellar-sparkle-sm.svg");
-    mask-repeat: no-repeat;
-    mask-position: center;
-    mask-size: contain;
-    -webkit-mask-image: url("../../assets/ask-stellar-sparkle-sm.svg");
-    -webkit-mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    -webkit-mask-size: contain;
+  // Logo.StellarShort is a filled path, not a stroked Icon glyph, so
+  // .Button__icon's stroke rule never reaches it — without this it renders at
+  // the #8F8F8F fallback baked into the asset.
+  --sds-logo-fill: var(--sds-clr-gray-12);
+
+  // SDS sizes .Button__icon to --Button-font-size (14px at size="lg"), which
+  // is the box, not the mark: the logo is inset in its 24x24 viewBox and draws
+  // 20.308 units tall — 84.6% — so a 14px box yields an 11.8px mark against
+  // the Figma node's 14px. 16.5px brings the drawn mark to 13.96px, a shade
+  // under rather than over. Two classes beat SDS's single .Button__icon.
+  .Button__icon {
+    width: pxToRem(16.5px);
+    height: pxToRem(16.5px);
   }
 
-  &__label {
-    font-size: pxToRem(14px);
-    line-height: pxToRem(20px);
-    font-weight: var(--sds-fw-semi-bold);
-    color: var(--sds-clr-lilac-11);
-    white-space: nowrap;
+  // SDS gates the Button focus ring on :focus, not :focus-visible — unlike
+  // its own Input/Textarea/Select/Toggle, which all use :focus-visible — so
+  // after a mouse click the pill keeps both the ring and the pressed -active
+  // colours until focus moves away.
+  //
+  // :focus:not(:focus-visible) is precisely "focused by pointer", so this
+  // neutralises SDS's :focus without touching keyboard focus: no restore rule,
+  // and no dependence on source order between the two. Colours come from the
+  // --Button-color-*-default properties, so it follows the variant rather than
+  // pinning gray-01/06/12 here.
+  //
+  // It is the custom property that moves, never box-shadow: the base rule
+  // composes the ring from --Button-box-shadow-size, and declaring box-shadow
+  // here would replace the ring outright rather than hide it.
+  //
+  // Local workaround for an upstream SDS bug — remove if SDS switches Button
+  // to :focus-visible.
+  .Button:focus:not(:focus-visible) {
+    --Button-box-shadow-size: 0;
+
+    color: var(--Button-color-text-default);
+    background-color: var(--Button-color-background-default);
+    border-color: var(--Button-color-border-default);
   }
 
-  // Hover firms the edge rather than lifting the pill — a 12% elevation would
-  // contradict the 3% hairline it sits at.
+  // The reset above outranks SDS's own :hover (three classes to two), so
+  // without this a pointer-focused pill would stop responding to the cursor
+  // still sitting on it. Hover colours win back; the ring stays suppressed,
+  // since only the three colours are re-stated here.
   @media (hover: hover) {
-    &:hover {
-      border-color: var(--sds-clr-gray-07);
-      box-shadow: 0 pxToRem(1px) pxToRem(2px) rgb(0 0 0 / 6%);
+    .Button:focus:not(:focus-visible):hover {
+      color: var(--Button-color-text-hover);
+      background-color: var(--Button-color-background-hover);
+      border-color: var(--Button-color-border-hover);
     }
   }
 }

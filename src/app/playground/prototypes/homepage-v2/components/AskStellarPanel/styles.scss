@@ -16,11 +16,13 @@
 
 .AskStellarPanel {
   position: fixed;
-  // Clears the pill below it: 24px inset + the pill's 32px + a 12px gap. The
-  // pill is always present while the panel is open, since both appear once a
-  // conversation exists. Matches the Figma frame, where the pill sits ~13px
+  // Clears the pill below it: 24px inset + the pill's 40px + a 12px gap. The
+  // pill is an SDS Button at size="lg", so its height is --Button-height
+  // (2.5rem) — it grew from 32px when it stopped being a hand-rolled button.
+  // The pill is always present while the panel is open, since both appear once
+  // a conversation exists. Matches the Figma frame, where the pill sits ~13px
   // under the panel and shares its right edge.
-  bottom: pxToRem(68px);
+  bottom: pxToRem(76px);
   right: pxToRem(24px);
   // Above page content, below SDS modals and float notifications.
   z-index: 10;
@@ -32,13 +34,18 @@
   // message list scrolls internally.
   height: auto;
   min-height: pxToRem(320px);
-  max-height: min(#{pxToRem(640px)}, calc(100vh - #{pxToRem(92px)}));
+  // 100px = the 76px bottom offset + 24px of clearance at the top, so the
+  // ceiling tracks the offset above rather than drifting from it.
+  max-height: min(#{pxToRem(640px)}, calc(100vh - #{pxToRem(100px)}));
 
   background-color: var(--sds-clr-gray-01);
   border: 1px solid var(--sds-clr-gray-06);
   // Off-token: SDS exposes no radius or shadow tokens. Values from the export.
   border-radius: pxToRem(24px);
-  box-shadow: 0 pxToRem(4px) pxToRem(10px) rgb(0 0 0 / 25%);
+  // The design has since moved: an earlier export gave 0 4px 10px at 25%, and
+  // the node now specifies double the blur at 10% — softer and more diffuse.
+  // The pill carries the identical shadow, so the two read as one family.
+  box-shadow: 0 pxToRem(4px) pxToRem(20px) rgb(0 0 0 / 10%);
   overflow: hidden;
 
   &:focus {
@@ -50,32 +57,37 @@
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
-    padding: pxToRem(24px);
+    padding: pxToRem(20px) pxToRem(24px);
     border-bottom: 1px solid var(--sds-clr-gray-06);
   }
 
   &__title {
+    // The SDS logo fills from this variable and falls back to a mid-gray
+    // when it is unset. Same mechanism as .Lab__home__resources.
+    --sds-logo-fill: var(--sds-clr-gray-12);
+
     display: flex;
     align-items: center;
-    gap: pxToRem(4px);
+    gap: pxToRem(8px);
+
+    // Logo.StellarShort is inset in its 24x24 viewBox: the outer arcs are
+    // r=10.154 about (12,12), so the mark draws 20.308 units tall — 84.6% of
+    // the box — while spanning the full 24 wide. A 23.5px box therefore draws
+    // 23.5 x 19.89, a hair under the Figma node's 23.75 x 20 rather than over.
+    // The box is square because the viewBox is; only the drawn mark is wide.
+    svg {
+      display: block;
+      flex-shrink: 0;
+      width: pxToRem(23.5px);
+      height: pxToRem(23.5px);
+    }
   }
 
-
-  // Same fixed gradient as the Ask Stellar block on the page, kept for
-  // consistency. Off-token by design, and carries the same dark-mode
-  // legibility problem recorded in the README.
   &__titleText {
-    font-size: pxToRem(18px);
-    line-height: pxToRem(26px);
+    font-size: pxToRem(16px);
+    line-height: pxToRem(24px);
     font-weight: var(--sds-fw-medium);
-    background-image: linear-gradient(
-      247.9deg,
-      rgb(141 124 226) 33.934%,
-      rgb(36 29 73) 155.41%
-    );
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
+    color: var(--sds-clr-gray-12);
   }
 
 

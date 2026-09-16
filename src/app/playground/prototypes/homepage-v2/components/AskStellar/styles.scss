@@ -36,25 +36,6 @@
     min-height: 0;
   }
 
-  // Masked rather than an <img>: the source SVG carries its own gradient fill,
-  // so it can't be recoloured to lilac-11 as an image.
-  &__sparkle {
-    flex-shrink: 0;
-    width: pxToRem(20px);
-    height: pxToRem(20px);
-    // Nudge onto the placeholder's cap height.
-    margin-top: pxToRem(2px);
-    background-color: var(--sds-clr-lilac-11);
-    mask-image: url("../../assets/ask-stellar-sparkle.svg");
-    mask-repeat: no-repeat;
-    mask-position: center;
-    mask-size: contain;
-    -webkit-mask-image: url("../../assets/ask-stellar-sparkle.svg");
-    -webkit-mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    -webkit-mask-size: contain;
-  }
-
   &__input {
     flex: 1 1 auto;
     min-width: 0;

@@ -1,15 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Button, Icon, Text } from "@stellar/design-system";
+import { Button, Icon, Logo, Text } from "@stellar/design-system";
 
 import { openUrl } from "@/helpers/openUrl";
 
 import { PanelIconButton } from "../PanelIconButton";
 import { getMockAskStellarReply } from "../../mock-data";
-import sparkle from "../../assets/ask-stellar-sparkle.svg";
 
 import "./styles.scss";
 
@@ -106,13 +104,10 @@ export const AskStellarPanel = ({
     >
       <div className="AskStellarPanel__header">
         <div className="AskStellarPanel__title">
-          <Image
-            src={sparkle}
-            alt=""
-            width={20}
-            height={20}
-            aria-hidden="true"
-          />
+          {/* Decorative: the adjacent text already says "Ask Stellar".
+              Sized and coloured from styles.scss — the SDS logo renders at
+              1em and fills from --sds-logo-fill. */}
+          <Logo.StellarShort aria-hidden="true" />
           <span className="AskStellarPanel__titleText">Ask Stellar</span>
         </div>
 
