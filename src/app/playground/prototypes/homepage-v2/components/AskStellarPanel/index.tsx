@@ -284,8 +284,15 @@ export const AskStellarPanel = ({
   const [openSourceKey, setOpenSourceKey] = useState<string | null>(null);
   // Bumped to force every <Floater> to remount closed — see closeSourceMenu.
   const [floaterEpoch, setFloaterEpoch] = useState(0);
+  /**
+   * Where the thread sat when the open menu was anchored, or null while that
+   * is still settling. Scrolling past this point dismisses the menu.
+   */
+  const menuAnchorScrollTop = useRef<number | null>(null);
   const panelEl = useRef<HTMLDivElement>(null);
   const scrollEl = useRef<HTMLDivElement>(null);
+  // The newest question bubble, which a landed reply scrolls to the top.
+  const lastBubbleEl = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   const navigate = useCallback(
@@ -308,6 +315,7 @@ export const AskStellarPanel = ({
   const closeSourceMenu = useCallback(() => {
     setFloaterEpoch((epoch) => epoch + 1);
     setOpenSourceKey(null);
+    menuAnchorScrollTop.current = null;
   }, []);
 
   const handleSourceOpenChange = useCallback((key: string, isOpen: boolean) => {
@@ -319,6 +327,22 @@ export const AskStellarPanel = ({
       }
 
       return prev === key ? null : prev;
+    });
+
+    if (!isOpen) {
+      menuAnchorScrollTop.current = null;
+      return;
+    }
+
+    // Opening focuses the badge, and focusing one that sits partly below the
+    // fold makes the browser scroll it into view. That scroll is a consequence
+    // of opening, not the reader moving the thread, so the anchor is taken on
+    // the next frame, once it has landed. Until then it stays null and
+    // scrolling dismisses nothing — otherwise the menu closed itself the
+    // instant it opened.
+    menuAnchorScrollTop.current = null;
+    requestAnimationFrame(() => {
+      menuAnchorScrollTop.current = scrollEl.current?.scrollTop ?? 0;
     });
   }, []);
 
@@ -333,17 +357,23 @@ export const AskStellarPanel = ({
   const handleScroll = useCallback(() => {
     const el = scrollEl.current;
 
-    if (el) {
-      setIsAtBottom(
-        el.scrollHeight - el.scrollTop - el.clientHeight <= AT_BOTTOM_SLOP,
-      );
+    if (!el) {
+      return;
     }
+
+    setIsAtBottom(
+      el.scrollHeight - el.scrollTop - el.clientHeight <= AT_BOTTOM_SLOP,
+    );
 
     // The menu is anchored to a badge inside this scroll area, so it travels
     // with it. Once the thread moves it has stopped reading as attached to the
     // sentence it came from, and a menu that outlives its anchor is worse than
     // no menu — so scrolling dismisses it, the same way clicking away does.
-    if (openSourceKey) {
+    // Measured against the anchor rather than "any scroll", so the browser's
+    // own scroll-into-view on opening does not count as the reader moving.
+    const anchor = menuAnchorScrollTop.current;
+
+    if (openSourceKey && anchor !== null && el.scrollTop !== anchor) {
       closeSourceMenu();
     }
   }, [openSourceKey, closeSourceMenu]);
@@ -389,8 +419,8 @@ export const AskStellarPanel = ({
     return () => clearTimeout(timer);
   }, [isThinking, onAnswered]);
 
-  // Keep the newest exchange — question, indicator, then reply — in view. The
-  // reply can be taller than the panel, so re-measure once it has landed.
+  // A question was just sent: drop to the bottom, so the question and the
+  // "Thinking..." indicator under it are both in view.
   useEffect(() => {
     const el = scrollEl.current;
 
@@ -398,7 +428,41 @@ export const AskStellarPanel = ({
       el.scrollTop = el.scrollHeight;
       setIsAtBottom(true);
     }
-  }, [messages, answeredCount]);
+  }, [messages.length]);
+
+  // A reply landed: park the question at the top of the view instead, so the
+  // answer is read from its first line down. Pinning to the bottom would drop
+  // the reader at the end of an answer they have not read yet.
+  useEffect(() => {
+    const el = scrollEl.current;
+
+    if (!el || answeredCount === 0) {
+      return;
+    }
+
+    const bubble = lastBubbleEl.current;
+    // The first exchange goes to the very top, which keeps the "Today" label
+    // above it in view; later ones put the bubble itself at the top.
+    const isFirstExchange = messages.length === 1;
+
+    if (!isFirstExchange && bubble) {
+      // Read the padding rather than repeating the SCSS value here, so the two
+      // cannot drift apart.
+      const padTop = parseFloat(getComputedStyle(el).paddingTop) || 0;
+      const offset =
+        bubble.getBoundingClientRect().top - el.getBoundingClientRect().top;
+
+      el.scrollTop = Math.max(0, el.scrollTop + offset - padTop);
+    } else {
+      el.scrollTop = 0;
+    }
+
+    // Set directly: if the scroll position did not actually change, no scroll
+    // event fires and handleScroll would never run.
+    setIsAtBottom(
+      el.scrollHeight - el.scrollTop - el.clientHeight <= AT_BOTTOM_SLOP,
+    );
+  }, [answeredCount, messages.length]);
 
   const submit = (text: string) => {
     const trimmed = text.trim();
@@ -455,7 +519,11 @@ export const AskStellarPanel = ({
                   className="AskStellarPanel__exchange"
                   key={`${message}-${idx}`}
                 >
-                  <div className="AskStellarPanel__bubble" data-from="user">
+                  <div
+                    className="AskStellarPanel__bubble"
+                    data-from="user"
+                    ref={idx === messages.length - 1 ? lastBubbleEl : undefined}
+                  >
                     <Text as="div" size="sm">
                       {message}
                     </Text>
