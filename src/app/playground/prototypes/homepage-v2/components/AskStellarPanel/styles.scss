@@ -1,27 +1,17 @@
 @use "../../../../../../styles/utils.scss" as *;
 
-@keyframes AskStellarPanel-typing {
-  0%,
-  60%,
-  100% {
-    opacity: 0.25;
-    transform: translateY(0);
-  }
-
-  30% {
-    opacity: 1;
-    transform: translateY(#{pxToRem(-2px)});
-  }
-}
-
 .AskStellarPanel {
+  // The composer's own height (box + the 16px below it), and the strip of fade
+  // above it. Shared, because the thread's bottom padding, the gradient stop,
+  // and the scroll-to-bottom button all have to agree with it.
+  --AskStellarPanel-composer-height: #{pxToRem(106px)};
+  --AskStellarPanel-composer-fade: #{pxToRem(32px)};
+
   position: fixed;
   // Clears the pill below it: 24px inset + the pill's 40px + a 12px gap. The
   // pill is an SDS Button at size="lg", so its height is --Button-height
-  // (2.5rem) — it grew from 32px when it stopped being a hand-rolled button.
-  // The pill is always present while the panel is open, since both appear once
-  // a conversation exists. Matches the Figma frame, where the pill sits ~13px
-  // under the panel and shares its right edge.
+  // (2.5rem). Matches the Figma frame, where the pill sits ~13px under the
+  // panel and shares its right edge.
   bottom: pxToRem(76px);
   right: pxToRem(24px);
   // Above page content, below SDS modals and float notifications.
@@ -30,20 +20,17 @@
   display: flex;
   flex-direction: column;
   width: pxToRem(414px);
-  // Height follows content between a 320px floor and a 640px ceiling, then the
-  // message list scrolls internally.
-  height: auto;
-  min-height: pxToRem(320px);
+  // Fixed at the Figma frame height. Every state frame is 414x640, and the
+  // composer is anchored to the bottom edge, so the shell no longer grows with
+  // its content — the thread scrolls inside it instead.
   // 100px = the 76px bottom offset + 24px of clearance at the top, so the
-  // ceiling tracks the offset above rather than drifting from it.
-  max-height: min(#{pxToRem(640px)}, calc(100vh - #{pxToRem(100px)}));
+  // viewport clamp tracks the offset above rather than drifting from it.
+  height: min(#{pxToRem(640px)}, calc(100vh - #{pxToRem(100px)}));
 
   background-color: var(--sds-clr-gray-01);
   border: 1px solid var(--sds-clr-gray-06);
   // Off-token: SDS exposes no radius or shadow tokens. Values from the export.
   border-radius: pxToRem(24px);
-  // The design has since moved: an earlier export gave 0 4px 10px at 25%, and
-  // the node now specifies double the blur at 10% — softer and more diffuse.
   // The pill carries the identical shadow, so the two read as one family.
   box-shadow: 0 pxToRem(4px) pxToRem(20px) rgb(0 0 0 / 10%);
   overflow: hidden;
@@ -57,6 +44,7 @@
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
+    // 20/24 padding on a 24px row makes the 65px header in the frames.
     padding: pxToRem(20px) pxToRem(24px);
     border-bottom: 1px solid var(--sds-clr-gray-06);
   }
@@ -70,120 +58,357 @@
     align-items: center;
     gap: pxToRem(8px);
 
-    // Logo.StellarShort is inset in its 24x24 viewBox: the outer arcs are
-    // r=10.154 about (12,12), so the mark draws 20.308 units tall — 84.6% of
-    // the box — while spanning the full 24 wide. A 23.5px box therefore draws
-    // 23.5 x 19.89, a hair under the Figma node's 23.75 x 20 rather than over.
-    // The box is square because the viewBox is; only the drawn mark is wide.
     svg {
       display: block;
       flex-shrink: 0;
-      width: pxToRem(23.5px);
-      height: pxToRem(23.5px);
+      width: pxToRem(24px);
+      height: pxToRem(24px);
     }
   }
 
   &__titleText {
-    font-size: pxToRem(16px);
-    line-height: pxToRem(24px);
+    font-size: pxToRem(14px);
+    line-height: pxToRem(20px);
     font-weight: var(--sds-fw-medium);
     color: var(--sds-clr-gray-12);
   }
 
+  // ---------------------------------------------------------------------
+  // Body
+  // ---------------------------------------------------------------------
 
   &__messages {
+    position: relative;
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
-    // Symmetric, per the designer: the export's narrower 331px message column
-    // is an auto-layout artifact and the Figma file is being corrected.
-    padding: pxToRem(24px);
+    padding: pxToRem(16px);
+  }
+
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: pxToRem(16px);
+    // The composer overlays this scroll area rather than taking height from it,
+    // so centring against `100%` would centre behind the composer and sit too
+    // low. The bottom padding is the composer's height, and with border-box it
+    // comes out of the centred area — which is how the frames read.
+    box-sizing: border-box;
+    min-height: 100%;
+    padding-bottom: var(--AskStellarPanel-composer-height);
+  }
+
+  // SDS <Text> ships no colour of its own, so a bare heading falls through to
+  // the UA default — black in both themes, which is invisible on dark. Every
+  // other text block in this panel takes its colour from its BEM wrapper; this
+  // one goes through addlClassName because <Text> accepts one (<Button> does
+  // not, which is why the buttons above use data attributes instead).
+  &__emptyTitle {
+    color: var(--sds-clr-gray-12);
+  }
+
+  &__suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: pxToRem(8px);
+    width: pxToRem(334px);
+    max-width: 100%;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  &__suggestion {
+    // SDS sets `li::before { content: "-" }` on every list item under the theme
+    // class. Same suppression production uses in .BuildInfoInstructions.
+    &::before {
+      display: none;
+    }
+  }
+
+  &__thread {
     display: flex;
     flex-direction: column;
     gap: pxToRem(16px);
+    // Clears the composer, which overlays this scroll area, so the last
+    // paragraph can still scroll clear of it — fade included.
+    padding-bottom: calc(
+      var(--AskStellarPanel-composer-height) +
+        var(--AskStellarPanel-composer-fade)
+    );
+  }
+
+  &__day {
+    align-self: center;
+    font-size: pxToRem(12px);
+    line-height: pxToRem(18px);
+    color: var(--sds-clr-gray-11);
   }
 
   &__exchange {
     display: flex;
     flex-direction: column;
     gap: pxToRem(16px);
+
+    // The gap above is within one exchange; consecutive exchanges sit further
+    // apart so the thread reads as turns rather than one column of text.
+    & + & {
+      margin-top: pxToRem(8px);
+    }
   }
 
   // Only the user gets a bubble. The assistant is the panel's own voice, so it
   // reads as body copy rather than as a message from someone else.
   &__bubble[data-from="user"] {
     align-self: flex-end;
-    max-width: 85%;
+    // 296px at the 414px panel width, per the frames. Clamped so it still fits
+    // when the panel goes full-bleed at the mobile breakpoint below.
+    max-width: min(#{pxToRem(296px)}, 100%);
     padding: pxToRem(8px) pxToRem(12px);
     border-radius: pxToRem(16px);
     background-color: var(--sds-clr-lilac-03);
     color: var(--sds-clr-gray-12);
-    text-align: center;
   }
 
   &__reply {
     align-self: stretch;
-    color: var(--sds-clr-gray-12);
-    // Preserve the reply's line breaks.
-    white-space: pre-wrap;
-  }
-
-  &__actions {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: pxToRem(8px);
+    flex-direction: column;
+    gap: pxToRem(16px);
+    // Keeps the measure off the right edge, so answers do not run the full
+    // width the user bubble is allowed.
+    padding-right: pxToRem(32px);
   }
 
-  // Three dots while the reply is "in flight". A keyframe rather than a
-  // transition because there is no state change to transition between.
-  &__typing {
+  // A div rather than a <p>, because the source badge's SDS <Floater> renders a
+  // div wrapper around its trigger and a div cannot legally nest inside a <p>.
+  // Being a div also sidesteps SDS's prose rules — `.sds-theme-light p` (0,1,1)
+  // forces 16/28, and `p:not(:last-child)` (0,2,1) adds a 24px bottom margin on
+  // top of this column's own gap — so a single class is enough here.
+  &__paragraph {
+    margin: 0;
+    font-size: pxToRem(14px);
+    line-height: pxToRem(20px);
+    color: var(--sds-clr-gray-12);
+  }
+
+  // SDS <Link> is built to stand on its own: `display: inline-flex` makes it an
+  // atomic box that cannot wrap mid-label, and `.Link:not(:last-child)` adds a
+  // 1rem right margin meant for rows of links. Both are wrong inside running
+  // prose — "Upload and deploy contract" would jump to its own line whole.
+  // Kept for its colour tokens and anchor handling. That margin rule is
+  // (0,2,0), so this is (0,3,0) rather than relying on source order.
+  & &__reply &__link {
+    display: inline;
+    margin-right: 0;
+    // Figma sets the inline links a step heavier than SDS's medium.
+    font-weight: var(--sds-fw-semi-bold);
+  }
+
+  // Closes a paragraph, so it is inline content rather than its own row.
+  // Renders as an <a> for a lone source and a <button> for a menu; identical
+  // either way, hence the reset of the anchor's underline.
+  &__sourceBadge {
+    text-decoration: none;
+    // Both children set their own colour, but an <a> otherwise carries the UA
+    // link blue on the element itself while the <button> carries buttontext —
+    // so anything added later would inherit differently in the two cases.
+    color: var(--sds-clr-gray-11);
+    display: inline-flex;
+    align-items: center;
+    gap: pxToRem(4px);
+    padding: pxToRem(3px) pxToRem(6px);
+    border: none;
+    // Clamps to a pill at this height; matches the frames' literal 100.
+    border-radius: pxToRem(100px);
+    background-color: var(--sds-clr-gray-03);
+    cursor: pointer;
+    // Never break the pill across two lines.
+    white-space: nowrap;
+    vertical-align: middle;
+    transition: background-color 0.15s ease;
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--sds-clr-gray-04);
+      }
+    }
+  }
+
+  &__sourceIcon {
+    display: block;
+    flex-shrink: 0;
+
+    svg {
+      display: block;
+      // 12px on the badge, 14px in the menu — set by the two callers.
+      width: var(--AskStellarPanel-source-icon, #{pxToRem(12px)});
+      height: var(--AskStellarPanel-source-icon, #{pxToRem(12px)});
+      color: var(--sds-clr-gray-11);
+      stroke: var(--sds-clr-gray-11);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Source menu
+  //
+  // SDS <Floater> supplies the positioning, the 6px radius and the
+  // click-outside; the rest is overridden below. Its wrapper is a div, so it
+  // has to be made inline again to sit inside a sentence.
+  // ---------------------------------------------------------------------
+
+  & &__reply .Floater {
+    display: inline-block;
+    vertical-align: middle;
+    // SDS puts `z-index: 1` on the wrapper, which lifted the whole trigger —
+    // badge included — above the composer, so the badge stayed opaque while
+    // the text around it faded under the gradient. The badge is part of its
+    // paragraph and must fade with it.
+    z-index: auto;
+  }
+
+  // Same reason, for the open state: SDS raises the wrapper to the tooltip
+  // layer (0,2,0) while the menu is open, which would lift the badge too. Only
+  // the menu itself should rise — see .Floater__content below.
+  & &__reply .Floater.trigger,
+  & &__reply .Floater.trigger--active {
+    z-index: auto;
+  }
+
+  & .Floater__content {
+    // Now that the wrapper no longer forms a stacking context, the menu needs
+    // to clear the composer on its own.
+    z-index: var(--sds-z-index-tooltip);
+    // Set directly rather than through --Floater-background-color, which
+    // `[data-is-contrast="false"]` also sets at the same specificity.
+    background-color: var(--sds-clr-gray-01);
+    border-color: var(--sds-clr-gray-06);
+    width: pxToRem(287px);
+    padding: pxToRem(4px);
+    box-shadow: 0 pxToRem(10px) pxToRem(20px) pxToRem(-10px) rgb(0 0 0 / 10%);
+  }
+
+  &__sourceMenu {
+    display: flex;
+    flex-direction: column;
+    gap: pxToRem(4px);
+  }
+
+  // A real element rather than a border on the item, so both rows keep the
+  // same hover rectangle and the 4px either side of the rule is symmetric.
+  &__sourceDivider {
+    height: 1px;
+    background-color: var(--sds-clr-gray-06);
+  }
+
+  &__sourceItem {
+    --AskStellarPanel-source-icon: #{pxToRem(14px)};
+
+    display: flex;
+    flex-direction: column;
+    gap: pxToRem(4px);
+    padding: pxToRem(6px) pxToRem(8px);
+    border-radius: pxToRem(4px);
+    text-decoration: none;
+    // Min-width 0 lets the description below actually ellipsise.
+    min-width: 0;
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--sds-clr-gray-02);
+      }
+    }
+  }
+
+  &__sourceItemTitle {
     display: flex;
     align-items: center;
     gap: pxToRem(4px);
-    padding: pxToRem(6px) 0;
+    font-size: pxToRem(12px);
+    line-height: pxToRem(18px);
+    font-weight: var(--sds-fw-medium);
+    color: var(--sds-clr-gray-12);
+  }
 
-    span {
-      width: pxToRem(6px);
-      height: pxToRem(6px);
-      border-radius: 50%;
-      background-color: var(--sds-clr-gray-09);
-      animation: AskStellarPanel-typing 1.2s ease-in-out infinite;
+  &__sourceItemArrow {
+    // Pinned to the right edge of the row.
+    margin-left: auto;
+    display: block;
+    flex-shrink: 0;
 
-      &:nth-child(2) {
-        animation-delay: 0.15s;
-      }
-
-      &:nth-child(3) {
-        animation-delay: 0.3s;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      span {
-        animation: none;
-        opacity: 0.5;
-      }
+    svg {
+      display: block;
+      width: pxToRem(14px);
+      height: pxToRem(14px);
+      color: var(--sds-clr-gray-11);
+      stroke: var(--sds-clr-gray-11);
     }
   }
 
+  &__sourceItemDesc {
+    font-size: pxToRem(12px);
+    line-height: pxToRem(18px);
+    color: var(--sds-clr-gray-11);
+    // One line; the Figma rows are a fixed height.
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__sourceLabel {
+    font-size: pxToRem(10px);
+    line-height: pxToRem(14px);
+    color: var(--sds-clr-gray-11);
+  }
+
+  &__thinking {
+    font-size: pxToRem(14px);
+    line-height: pxToRem(20px);
+    color: var(--sds-clr-gray-11);
+  }
+
+  // ---------------------------------------------------------------------
+  // Composer
+  // ---------------------------------------------------------------------
+
+  // Overlays the scroll area rather than sitting below it, so thread content
+  // fades out under the gradient as it scrolls past.
   &__composer {
-    flex-shrink: 0;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    // The top padding IS the fade. Without it the wrapper's content box is
+    // exactly the composer box's height, the opaque box covers the whole
+    // gradient, and the fade never shows — text ran straight into the box.
+    min-height: calc(
+      var(--AskStellarPanel-composer-height) +
+        var(--AskStellarPanel-composer-fade)
+    );
+    padding: var(--AskStellarPanel-composer-fade) pxToRem(16px) pxToRem(16px);
+    background: linear-gradient(
+      to top,
+      var(--sds-clr-gray-01) 0%,
+      var(--sds-clr-gray-01) calc(100% - var(--AskStellarPanel-composer-fade)),
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  &__composerBox {
     display: flex;
     flex-direction: column;
     gap: pxToRem(8px);
-    margin: 0 pxToRem(24px) pxToRem(24px);
     padding: pxToRem(16px);
     min-height: pxToRem(82px);
     background-color: var(--sds-clr-gray-01);
     border: 1px solid var(--sds-clr-gray-06);
     border-radius: pxToRem(16px);
-
-    // Send button sits bottom-right inside the box.
-    .PanelIconButton {
-      align-self: flex-end;
-      margin-top: auto;
-    }
+    // Re-enables input; the wrapper above turns it off so the gradient margin
+    // does not swallow clicks meant for the thread behind it.
+    pointer-events: auto;
   }
 
   &__composerInput {
@@ -191,13 +416,126 @@
     border: none;
     outline: none;
     background: transparent;
+    resize: none;
     font-family: inherit;
     font-size: pxToRem(14px);
     line-height: pxToRem(20px);
     color: var(--sds-clr-gray-12);
+    // One line, per the frames. A bare rows=1 textarea measures ~26px in
+    // Chrome, which pushed the box to 94px against the frame's 90px.
+    // TODO: does not auto-grow — a long draft scrolls within the line.
+    height: pxToRem(20px);
+    overflow-y: auto;
+    // The fixed height makes a long draft overflow, and the composer must never
+    // show a scrollbar track down its right edge.
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
 
     &::placeholder {
       color: var(--sds-clr-gray-11);
+    }
+  }
+
+  &__composerActions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: pxToRem(8px);
+    margin-top: auto;
+  }
+
+  // ---------------------------------------------------------------------
+  // SDS Button overrides
+  //
+  // Written against SDS's own --Button-* custom properties, because <Button>
+  // spreads its props over its className and would drop any class passed in.
+  // Each rule only moves values SDS already exposes as variables; the two
+  // exceptions (justify-content, width) are noted.
+  // ---------------------------------------------------------------------
+
+  [data-panel-role="close"] {
+    // 24px borderless square. --Button-font-size drives the icon box, so 16px
+    // of glyph plus 4px either side lands on 24.
+    --Button-height: #{pxToRem(24px)};
+    --Button-font-size: #{pxToRem(16px)};
+    --Button-padding-horizontal: #{pxToRem(4px)};
+    --Button-padding-vertical: 0;
+    --Button-color-background-default: transparent;
+    --Button-color-border-default: transparent;
+    --Button-color-background-hover: var(--sds-clr-gray-03);
+    --Button-color-border-hover: transparent;
+    --Button-color-background-active: var(--sds-clr-gray-03);
+    --Button-color-border-active: transparent;
+  }
+
+  // Floats over the fade, just clear of the composer box. isRounded already
+  // resolves the radius to height/2, which is the same circle the frames' 100
+  // clamps to.
+  [data-panel-role="scroll-bottom"] {
+    position: absolute;
+    left: 50%;
+    bottom: calc(var(--AskStellarPanel-composer-height) + #{pxToRem(16px)});
+    transform: translateX(-50%);
+    // The wrapper turns pointer events off for the gradient; this needs them.
+    pointer-events: auto;
+    z-index: 1;
+
+    --Button-height: #{pxToRem(34px)};
+    --Button-font-size: #{pxToRem(14px)};
+    --Button-padding-vertical: 0;
+    --Button-padding-horizontal: 0;
+    // Translucent over the thread, so it reads as floating rather than as part
+    // of the composer. color-mix keeps it on the token in both themes.
+    --Button-color-background-default: #{"color-mix(in srgb, var(--sds-clr-gray-01) 70%, transparent)"};
+
+    width: pxToRem(34px);
+    backdrop-filter: blur(#{pxToRem(2px)});
+  }
+
+  [data-panel-role="suggestion"] {
+    --Button-height: #{pxToRem(36px)};
+    --Button-font-size: #{pxToRem(14px)};
+    --Button-line-height: #{pxToRem(20px)};
+    --Button-border-radius: #{pxToRem(8px)};
+    --Button-padding-vertical: #{pxToRem(8px)};
+    --Button-padding-horizontal: #{pxToRem(10px)};
+    --Button-gap: #{pxToRem(8px)};
+    // Secondary, not primary: the chip is a prompt, not an answer.
+    --Button-color-text-default: var(--sds-clr-gray-11);
+    --Button-color-text-hover: var(--sds-clr-gray-12);
+    --Button-color-text-active: var(--sds-clr-gray-12);
+
+    // Not exposed as variables: SDS centres button content, and the chips are
+    // left-aligned rows of icon + label.
+    justify-content: flex-start;
+    font-weight: var(--sds-fw-medium);
+    text-align: left;
+  }
+
+  &__composerActions {
+    // 28px tall with a 12px glyph, per the frames. SDS size="sm" already
+    // supplies the 4/8 padding and 4px radius.
+    [data-panel-role] {
+      --Button-height: #{pxToRem(28px)};
+      --Button-font-size: #{pxToRem(12px)};
+      --Button-padding-vertical: #{pxToRem(4px)};
+      --Button-padding-horizontal: #{pxToRem(8px)};
+
+      // Not exposed as a variable: --Button-height is a border-box height, but
+      // width is left to the content, so 12px of glyph plus padding and border
+      // came out at 30. These are square.
+      width: pxToRem(28px);
+    }
+
+    // Borderless — the mic is the quieter of the two controls.
+    [data-panel-role="mic"] {
+      --Button-color-background-default: transparent;
+      --Button-color-border-default: transparent;
+      --Button-color-border-hover: transparent;
+      --Button-color-border-active: transparent;
     }
   }
 

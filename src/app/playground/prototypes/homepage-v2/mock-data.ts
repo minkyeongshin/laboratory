@@ -173,97 +173,141 @@ export const mockSaveAndShare = {
   image: themed(saveShareComposite),
 };
 
-export type AskStellarAction = {
+/** One cited source, shown as a badge on a paragraph and a row in its popover. */
+export type AskStellarSource = {
   id: string;
+  /** Site name. Also the badge label when this is a paragraph's first source. */
+  title: string;
+  /** One line, ellipsised in the popover. */
+  description: string;
+  url: string;
+};
+
+/**
+ * A link inside a paragraph. `label` must appear verbatim in the paragraph's
+ * text — the panel splits on it rather than storing the copy pre-segmented, so
+ * the text stays readable and translatable here.
+ */
+export type AskStellarInlineLink = {
   label: string;
   route?: string;
   url?: string;
 };
 
+export type AskStellarParagraph = {
+  text: string;
+  links?: AskStellarInlineLink[];
+  /** Rendered as one badge after the last word; the popover lists them all. */
+  sources?: AskStellarSource[];
+};
+
 export type AskStellarReply = {
-  body: string;
-  actions: AskStellarAction[];
+  paragraphs: AskStellarParagraph[];
+};
+
+// The two sources behind every badge in the Figma frames. Shared rather than
+// repeated so the popover rows stay identical wherever a badge is opened.
+const SOURCE_DEV_DOCS: AskStellarSource = {
+  id: "dev-docs",
+  title: "Developer docs",
+  description: "Fund account on Testnet",
+  url: "https://developers.stellar.org/docs/build/smart-contracts",
+};
+
+const SOURCE_LAB: AskStellarSource = {
+  id: "lab",
+  title: "Stellar Lab",
+  description: "Fund a Testnet account or Contract with XLM, USDC",
+  url: "https://lab.stellar.org/account/fund",
 };
 
 /**
- * Canned replies keyed by the exact suggestion text. Still no API — these are
- * hand-written so that clicking a suggestion returns something on-topic
- * instead of the same deploy answer every time. Anything typed freehand falls
- * back to the deploy reply.
+ * Canned replies keyed by the exact suggestion text, so clicking a suggestion
+ * returns something on topic. Anything typed freehand falls back to the deploy
+ * reply — including "How do I deploy a smart contract from Lab?", the sample
+ * question in the Figma frames.
  *
- * One sentence per line; the bubble renders with `white-space: pre-wrap`.
+ * Copy is verbatim from the Figma Answer (9569:203) and Long answer (9569:3129)
+ * frames, with one exception noted below. Still no API.
  */
 export const mockAskStellarReplies: Record<string, AskStellarReply> = {
-  "Deploy a smart contract": {
-    body: [
-      "Compile your contract to a WASM file, then upload it to the network.",
-      "Create a deployment transaction and simulate it first to catch errors and estimate resources.",
-      "Review the network, contract ID, and required authorization before you sign.",
-      "Once it is submitted you can invoke functions, inspect events, and start testing.",
-    ].join("\n"),
-    actions: [
+  // Short shape: two paragraphs, one badge. Matches the Answer frame's layout.
+  "How do I create a transaction?": {
+    paragraphs: [
       {
-        id: "deploy",
-        label: "Deploy contract",
-        route: Routes.SMART_CONTRACTS_DEPLOY_CONTRACT,
+        text: "Use Build a transaction under Transactions: set the source account, sequence number, and fee, then add the operations you want the transaction to carry.",
+        links: [
+          { label: "Build a transaction", route: Routes.BUILD_TRANSACTION },
+          { label: "Transactions", route: Routes.TRANSACTION },
+        ],
+        sources: [SOURCE_DEV_DOCS],
       },
       {
-        id: "contract-docs",
-        label: "Contract docs",
-        url: "https://developers.stellar.org/docs/build/smart-contracts",
+        text: "Simulate it before you sign to catch errors and estimate resources, then sign and submit. Want the steps?",
       },
     ],
   },
 
-  "Explain an XDR": {
-    body: [
-      "XDR is the binary format Stellar uses to encode transactions, ledger entries, and API responses.",
-      "The Lab decodes it to readable JSON so you can inspect envelopes, operations, and results without writing code.",
-      "Paste a base64 string and choose its type, or let the Lab work the type out for you.",
-      "You can also encode JSON back to XDR, or diff two values to see exactly what changed.",
-    ].join("\n"),
-    actions: [
+  // Long shape: four paragraphs, badges on the first and last. Matches the Long
+  // answer frame, which is the same question rendered past the scroll point.
+  "How do I deploy a smart contract?": {
+    paragraphs: [
       {
-        id: "view-xdr",
-        label: "View XDR",
-        route: Routes.VIEW_XDR,
+        text: "Use Upload and deploy contract under Smart contracts: it lets you choose a WASM file, build the upload transaction, add a signature, then build and sign the deploy transaction.",
+        links: [
+          {
+            label: "Upload and deploy contract",
+            route: Routes.SMART_CONTRACTS_DEPLOY_CONTRACT,
+          },
+          { label: "Smart contracts", route: Routes.SMART_CONTRACTS },
+        ],
+        sources: [SOURCE_DEV_DOCS],
       },
       {
-        id: "xdr-docs",
-        label: "XDR docs",
-        url: "https://developers.stellar.org/docs/learn/fundamentals/data-format/xdr",
+        text: "It also lets you create account keypairs, fund test accounts, create and parse muxed accounts, import transactions, fee-bump transactions, sign messages, connect a wallet, and save transactions, keypairs, requests, and smart contracts locally in your browser. If you want, I can point you to the right Lab page for a specific task.",
+      },
+      // The Figma frame repeats the paragraph above verbatim here, which reads
+      // as filler to push the frame past its scroll point rather than as copy.
+      // Replaced with an on-topic paragraph that does the same job.
+      {
+        text: "Simulation runs before either signature, so authorization and resource errors surface before you spend a fee. The contract ID is returned by the deploy transaction, and you can invoke functions against it from Contract explorer straight afterwards.",
+        links: [
+          {
+            label: "Contract explorer",
+            route: Routes.SMART_CONTRACTS_CONTRACT_EXPLORER,
+          },
+        ],
+      },
+      {
+        // The Figma copy splices the Testnet and Mainnet halves together with a
+        // comma; the missing full stop is being fixed in the file separately.
+        text: "If you need an account first on Testnet, you can fund it on Fund Account. On Mainnet, real funds move and transactions can’t be reversed. Want the steps?",
+        links: [{ label: "Fund Account", route: Routes.ACCOUNT_FUND }],
+        sources: [SOURCE_DEV_DOCS, SOURCE_LAB],
       },
     ],
   },
 
-  "Debug a transaction": {
-    body: [
-      "Start with the transaction result code — it tells you whether the failure came from the transaction itself or from one of its operations.",
-      "A tx_failed result means an operation failed, so check each operation result in turn.",
-      "For contract calls, simulate first: simulation surfaces authorization and resource errors before you spend a fee.",
-      "Look the hash up in the dashboard to see the full envelope, result, and any events it emitted.",
-    ].join("\n"),
-    actions: [
+  "What can I build with Stellar?": {
+    paragraphs: [
       {
-        id: "dashboard",
-        label: "Transaction dashboard",
-        route: Routes.TRANSACTION_DASHBOARD,
+        text: "Payments, asset issuance, and smart contracts, all on the same ledger: classic operations settle in about five seconds, and Soroban contracts run alongside them in Rust.",
+        sources: [SOURCE_DEV_DOCS],
       },
       {
-        id: "result-codes",
-        label: "Result codes",
-        url: "https://developers.stellar.org/docs/data/apis/horizon/api-reference/errors/result-codes",
+        text: "The Lab lets you create account keypairs, fund test accounts, create and parse muxed accounts, import transactions, fee-bump transactions, sign messages, connect a wallet, and save transactions, keypairs, requests, and smart contracts locally in your browser. If you want, I can point you to the right Lab page for a specific task.",
       },
     ],
   },
 };
 
-/** Freehand questions get this reply. */
-const ASK_STELLAR_FALLBACK_KEY = "Deploy a smart contract";
+/** Freehand questions, and the Figma sample question, get this reply. */
+const ASK_STELLAR_FALLBACK_KEY = "How do I deploy a smart contract?";
 
 export const getMockAskStellarReply = (question: string): AskStellarReply =>
   mockAskStellarReplies[question] ??
   mockAskStellarReplies[ASK_STELLAR_FALLBACK_KEY];
 
-// Derived from the replies so the two can't drift apart.
+// Derived from the replies so the two can't drift apart. Drives both the
+// homepage compose box's chips and the panel's empty state.
 export const mockAskStellarSuggestions = Object.keys(mockAskStellarReplies);

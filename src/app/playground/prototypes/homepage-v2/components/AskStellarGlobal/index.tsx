@@ -10,8 +10,10 @@ import { useAskStellarStore } from "../../store/askStellarStore";
  * Mounts the Ask Stellar panel and pill app-wide, so a conversation started on
  * the homepage-v2 prototype follows the user onto any route.
  *
- * Rules are unchanged from when this lived in the prototype's page:
- *   no conversation -> nothing, conversation -> pill, isOpen -> panel too.
+ * Rules: not visited -> nothing, visited -> pill, isOpen -> panel too. The pill
+ * no longer waits for a first question, because the panel now has an empty
+ * state of its own — opening it with no thread is how the suggestions are
+ * reached.
  *
  * Renders nothing until mounted. The store rehydrates from sessionStorage at
  * module load, so without this gate the first client render could disagree with
@@ -34,7 +36,7 @@ export const AskStellarGlobal = () => {
     setIsMounted(true);
   }, []);
 
-  if (!isMounted || !hasVisitedPrototype || messages.length === 0) {
+  if (!isMounted || !hasVisitedPrototype) {
     return null;
   }
 
