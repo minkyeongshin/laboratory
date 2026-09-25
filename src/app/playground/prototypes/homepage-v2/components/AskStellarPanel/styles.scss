@@ -6,6 +6,12 @@
   // and the scroll-to-bottom button all have to agree with it.
   --AskStellarPanel-composer-height: #{pxToRem(106px)};
   --AskStellarPanel-composer-fade: #{pxToRem(32px)};
+  // How much of the previous answer stays visible above a parked question, so
+  // the thread reads as continuing rather than as starting over. Read back by
+  // park() in index.tsx, which is why it lives here rather than there.
+  --AskStellarPanel-park-peek: #{pxToRem(24px)};
+  // The mirror of the composer fade, under the header.
+  --AskStellarPanel-top-fade: #{pxToRem(32px)};
 
   position: fixed;
   // Clears the pill below it: 24px inset + the pill's 40px + a 12px gap. The
@@ -156,6 +162,23 @@
     // apart so the thread reads as turns rather than one column of text.
     & + & {
       margin-top: pxToRem(8px);
+    }
+
+    // The newest exchange reserves a screen of space beneath itself, so its
+    // question can always be scrolled into place — otherwise a fresh question
+    // with only "Thinking..." under it has nothing to scroll against and parks
+    // partway down. Sized so that parking lands exactly at the end of the
+    // scroll: a viewport, less the peek above and the composer clearance
+    // below. Earlier exchanges keep their natural height.
+    // --AskStellarPanel-viewport is measured in index.tsx.
+    &:last-child {
+      min-height: calc(
+        var(--AskStellarPanel-viewport, 0px) - var(
+            --AskStellarPanel-park-peek
+          ) - var(--AskStellarPanel-composer-height) - var(
+            --AskStellarPanel-composer-fade
+          )
+      );
     }
   }
 
@@ -367,6 +390,25 @@
     font-size: pxToRem(14px);
     line-height: pxToRem(20px);
     color: var(--sds-clr-gray-11);
+  }
+
+  // The mirror of the composer's gradient, at the other end: content peeking
+  // above a parked question softens into the header instead of being cut off
+  // hard against it. Sits outside the scroll area so it does not travel with
+  // the text. --AskStellarPanel-header is measured in index.tsx.
+  &__topFade {
+    position: absolute;
+    top: var(--AskStellarPanel-header, 0px);
+    left: 0;
+    right: 0;
+    height: var(--AskStellarPanel-top-fade);
+    background: linear-gradient(
+      to bottom,
+      var(--sds-clr-gray-01) 0%,
+      transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
   }
 
   // ---------------------------------------------------------------------

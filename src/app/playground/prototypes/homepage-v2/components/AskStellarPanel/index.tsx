@@ -17,6 +17,7 @@ import {
   getMockAskStellarReply,
   mockAskStellarSuggestions,
   type AskStellarInlineLink,
+  type AskStellarParagraph,
   type AskStellarSource,
 } from "../../mock-data";
 
@@ -36,9 +37,20 @@ import "./styles.scss";
 // three suggestions answer on topic but anything typed freehand falls back to
 // the deploy reply. The typing delay below is theatre, not a real request.
 
-/** Fake think-time before a reply appears, in ms. */
-const TYPING_MIN_MS = 600;
-const TYPING_MAX_MS = 900;
+/** Fake think-time before a reply starts arriving, in ms. */
+const THINKING_MS = 800;
+
+// The reply is then revealed a word at a time. The jitter keeps the rhythm off
+// a metronome, and the longer pause lands where a reader would draw breath —
+// after sentence-ending punctuation and between paragraphs. All four are here
+// to be tuned by feel.
+const STREAM_WORD_MS = 45;
+/** Random ± applied to STREAM_WORD_MS. */
+const STREAM_JITTER_MS = 20;
+/** Total delay after a break, in place of the usual word delay. */
+const STREAM_PAUSE_MS = 150;
+/** Punctuation that earns the longer pause. */
+const STREAM_PAUSE_AFTER = /[.?:]$/;
 
 /**
  * Empty-state icons, keyed by suggestion text — the same keying the reply map
@@ -52,6 +64,78 @@ const SUGGESTION_ICONS: Record<string, React.ReactNode> = {
 
 /** How close to the end counts as "at the bottom", in px. */
 const AT_BOTTOM_SLOP = 8;
+
+/**
+ * Resolves a length read back from a custom property.
+ *
+ * getComputedStyle returns custom properties as authored rather than resolved
+ * — "2.5rem", not "40px" — so a bare parseFloat silently reads 2.5 pixels and
+ * the value quietly disagrees with what CSS is doing with the same token.
+ */
+const cssLengthToPx = (value: string) => {
+  const n = parseFloat(value);
+
+  if (!Number.isFinite(n)) {
+    return 0;
+  }
+
+  return value.trim().endsWith("rem")
+    ? n * parseFloat(getComputedStyle(document.documentElement).fontSize)
+    : n;
+};
+
+/**
+ * The reply's words in reveal order, each flagged if it closes a paragraph —
+ * which is where the stream pauses, along with sentence-ending punctuation.
+ */
+const flattenReplyWords = (paragraphs: AskStellarParagraph[]) =>
+  paragraphs.flatMap((paragraph, pIdx) => {
+    const words = paragraph.text.split(" ");
+
+    return words.map((word, i) => ({
+      word,
+      isParagraphEnd: i === words.length - 1 && pIdx < paragraphs.length - 1,
+    }));
+  });
+
+/**
+ * How much of each paragraph to show for a given reveal count, where the count
+ * runs across the whole reply rather than per paragraph — so paragraphs arrive
+ * in order off a single counter.
+ *
+ * `revealed: null` means "not streaming": everything is complete. A paragraph
+ * that has not started yet reports `hasStarted: false` so it can be skipped
+ * entirely rather than rendered as an empty row.
+ */
+const sliceReply = (
+  paragraphs: AskStellarParagraph[],
+  revealed: number | null,
+) => {
+  let before = 0;
+
+  return paragraphs.map((paragraph) => {
+    if (revealed === null) {
+      return {
+        paragraph,
+        text: paragraph.text,
+        hasStarted: true,
+        isComplete: true,
+      };
+    }
+
+    const words = paragraph.text.split(" ");
+    const shown = Math.max(0, Math.min(words.length, revealed - before));
+
+    before += words.length;
+
+    return {
+      paragraph,
+      text: words.slice(0, shown).join(" "),
+      hasStarted: shown > 0,
+      isComplete: shown === words.length,
+    };
+  });
+};
 
 /**
  * Splits a paragraph on its link labels so the copy stays one readable string
@@ -280,6 +364,26 @@ export const AskStellarPanel = ({
   const [isVoiceActive, setIsVoiceActive] = useState(false);
   // Hides the scroll-to-bottom button while the newest reply is already in view.
   const [isAtBottom, setIsAtBottom] = useState(true);
+  /**
+   * The reply currently being revealed, or null when nothing is streaming.
+   *
+   * Deliberately local rather than in the store: it is presentation, and a
+   * session restored from sessionStorage must render its reply whole rather
+   * than replay an animation the reader already watched.
+   */
+  const [stream, setStream] = useState<{
+    idx: number;
+    revealed: number;
+    total: number;
+  } | null>(null);
+  /** Set when Stop is pressed mid-think, so the reply arrives whole. */
+  const skipNextStream = useRef(false);
+  /**
+   * The answeredCount the stream decision has been made for; null until the
+   * first pass. State rather than a ref because clearing it has to re-render:
+   * when the decision is "do not stream", nothing else would.
+   */
+  const [decidedFor, setDecidedFor] = useState<number | null>(null);
   // Which source badge has its menu open, as "<exchange>-<paragraph>".
   const [openSourceKey, setOpenSourceKey] = useState<string | null>(null);
   // Bumped to force every <Floater> to remount closed — see closeSourceMenu.
@@ -293,6 +397,15 @@ export const AskStellarPanel = ({
   const scrollEl = useRef<HTMLDivElement>(null);
   // The newest question bubble, which a landed reply scrolls to the top.
   const lastBubbleEl = useRef<HTMLDivElement>(null);
+  /**
+   * The last real content in the thread — the newest reply, or the
+   * "Thinking..." indicator standing in for it. The scroll-to-bottom button is
+   * measured against this rather than scrollHeight, because the newest exchange
+   * reserves a screenful of empty space that is not something to scroll to.
+   */
+  const lastContentEl = useRef<HTMLDivElement>(null);
+  /** The composer overlays the foot of the scroll area; measured, not assumed. */
+  const composerEl = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   const navigate = useCallback(
@@ -346,13 +459,54 @@ export const AskStellarPanel = ({
     });
   }, []);
 
+  /**
+   * Where the thread would have to sit for the last of the answer to clear the
+   * composer. Not scrollHeight: the newest exchange reserves a screenful of
+   * blank space beneath itself, and scrolling into that is not "the bottom".
+   */
+  const contentEnd = useCallback(() => {
+    const el = scrollEl.current;
+    const content = lastContentEl.current;
+
+    if (!el || !content) {
+      return 0;
+    }
+
+    // The content's bottom edge in scroll coordinates.
+    const bottom =
+      content.getBoundingClientRect().bottom -
+      el.getBoundingClientRect().top +
+      el.scrollTop;
+
+    return Math.max(
+      0,
+      bottom - el.clientHeight + (composerEl.current?.offsetHeight ?? 0),
+    );
+  }, []);
+
+  /**
+   * Whether the end of the answer is readable from a given scroll position.
+   * Takes the position as an argument because a smooth park is still in flight
+   * when this has to be decided.
+   */
+  const isEndInView = useCallback(
+    (scrollTop: number) => {
+      if (!lastContentEl.current) {
+        return true;
+      }
+
+      return scrollTop >= contentEnd() - AT_BOTTOM_SLOP;
+    },
+    [contentEnd],
+  );
+
   const scrollToBottom = useCallback(() => {
     const el = scrollEl.current;
 
     if (el) {
-      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+      el.scrollTo({ top: contentEnd(), behavior: "smooth" });
     }
-  }, []);
+  }, [contentEnd]);
 
   const handleScroll = useCallback(() => {
     const el = scrollEl.current;
@@ -361,9 +515,7 @@ export const AskStellarPanel = ({
       return;
     }
 
-    setIsAtBottom(
-      el.scrollHeight - el.scrollTop - el.clientHeight <= AT_BOTTOM_SLOP,
-    );
+    setIsAtBottom(isEndInView(el.scrollTop));
 
     // The menu is anchored to a badge inside this scroll area, so it travels
     // with it. Once the thread moves it has stopped reading as attached to the
@@ -376,15 +528,85 @@ export const AskStellarPanel = ({
     if (openSourceKey && anchor !== null && el.scrollTop !== anchor) {
       closeSourceMenu();
     }
-  }, [openSourceKey, closeSourceMenu]);
+  }, [openSourceKey, closeSourceMenu, isEndInView]);
 
   const isThinking = messages.length > answeredCount;
+  const isStreaming = stream !== null;
+  /**
+   * answeredCount changes one render before the effect below can decide
+   * whether to stream, and in that render `stream` is still null — which would
+   * paint the whole reply for a frame before it collapsed back to its first
+   * word. A reply the effect has not ruled on yet counts as nothing revealed.
+   *
+   */
+  const isAwaitingStream = decidedFor !== null && decidedFor < answeredCount;
   const hasThread = messages.length > 0;
   const hasDraft = Boolean(draft.trim());
+
+  /**
+   * Stop finishes the reply instantly, whichever stage it is at: mid-stream it
+   * drops the remaining words in, mid-think it marks the reply so it arrives
+   * whole rather than starting a stream the reader just asked to skip.
+   */
+  const handleStop = useCallback(() => {
+    if (stream) {
+      setStream(null);
+      return;
+    }
+
+    skipNextStream.current = true;
+    onAnswered();
+  }, [stream, onAnswered]);
 
   // Move focus into the panel when it opens.
   useEffect(() => {
     panelEl.current?.focus();
+  }, []);
+
+  /**
+   * Publishes the scroll viewport's height to CSS, so the newest exchange can
+   * reserve a screen of space under itself (see __exchange:last-child). Without
+   * that reservation there is nothing below a fresh question to scroll against,
+   * and parking it at the top silently clamps partway.
+   *
+   * Set as a custom property through the ref rather than a React `style` prop:
+   * the playground rules bar inline styles, and a measured value has to reach
+   * the stylesheet somehow. Re-measured on resize so it tracks the panel's
+   * viewport clamp.
+   */
+  useEffect(() => {
+    const el = scrollEl.current;
+    const panel = panelEl.current;
+
+    if (!el || !panel) {
+      return;
+    }
+
+    const measure = () => {
+      const style = getComputedStyle(el);
+      const padTop = parseFloat(style.paddingTop) || 0;
+      const padBottom = parseFloat(style.paddingBottom) || 0;
+
+      // Both paddings come out, so this is the content height a full-screen
+      // exchange has to fill. Leaving the bottom one in left 16px of residual
+      // scroll after parking, which was enough to show the scroll-to-bottom
+      // button over nothing.
+      panel.style.setProperty(
+        "--AskStellarPanel-viewport",
+        `${el.clientHeight - padTop - padBottom}px`,
+      );
+      // The scroll area starts directly under the header, so its offset is the
+      // header's height — which is what the top fade has to sit below.
+      panel.style.setProperty("--AskStellarPanel-header", `${el.offsetTop}px`);
+    };
+
+    measure();
+
+    const observer = new ResizeObserver(measure);
+
+    observer.observe(el);
+
+    return () => observer.disconnect();
   }, []);
 
   // Escape closes the open source menu first, and only then the panel — so it
@@ -412,57 +634,151 @@ export const AskStellarPanel = ({
       return;
     }
 
-    const delay =
-      TYPING_MIN_MS + Math.random() * (TYPING_MAX_MS - TYPING_MIN_MS);
-    const timer = setTimeout(onAnswered, delay);
+    const timer = setTimeout(onAnswered, THINKING_MS);
 
     return () => clearTimeout(timer);
   }, [isThinking, onAnswered]);
 
-  // A question was just sent: drop to the bottom, so the question and the
-  // "Thinking..." indicator under it are both in view.
-  useEffect(() => {
+  /**
+   * Bring the newest question near the top of the view — not flush against the
+   * header, but with a sliver of the previous answer still showing above it, so
+   * the thread reads as continuing rather than as starting over. The first
+   * exchange goes to the very top instead, which keeps "Today" in view.
+   *
+   * This always reaches its target: the newest exchange reserves a screen of
+   * space beneath itself (see __exchange:last-child).
+   */
+  const park = useCallback(() => {
     const el = scrollEl.current;
+    const panel = panelEl.current;
 
-    if (el) {
-      el.scrollTop = el.scrollHeight;
-      setIsAtBottom(true);
-    }
-  }, [messages.length]);
-
-  // A reply landed: park the question at the top of the view instead, so the
-  // answer is read from its first line down. Pinning to the bottom would drop
-  // the reader at the end of an answer they have not read yet.
-  useEffect(() => {
-    const el = scrollEl.current;
-
-    if (!el || answeredCount === 0) {
+    if (!el || !panel) {
       return;
     }
 
     const bubble = lastBubbleEl.current;
-    // The first exchange goes to the very top, which keeps the "Today" label
-    // above it in view; later ones put the bubble itself at the top.
     const isFirstExchange = messages.length === 1;
+    let target = 0;
 
     if (!isFirstExchange && bubble) {
-      // Read the padding rather than repeating the SCSS value here, so the two
-      // cannot drift apart.
+      // Both read back rather than repeated here, so the SCSS stays the one
+      // place these numbers are written down.
       const padTop = parseFloat(getComputedStyle(el).paddingTop) || 0;
+      const peek = cssLengthToPx(
+        getComputedStyle(panel).getPropertyValue("--AskStellarPanel-park-peek"),
+      );
       const offset =
         bubble.getBoundingClientRect().top - el.getBoundingClientRect().top;
 
-      el.scrollTop = Math.max(0, el.scrollTop + offset - padTop);
-    } else {
-      el.scrollTop = 0;
+      target = Math.max(0, el.scrollTop + offset - padTop - peek);
     }
 
-    // Set directly: if the scroll position did not actually change, no scroll
-    // event fires and handleScroll would never run.
-    setIsAtBottom(
-      el.scrollHeight - el.scrollTop - el.clientHeight <= AT_BOTTOM_SLOP,
+    // Glides rather than jumps, so the question visibly travels up the panel
+    // and the reader can see where it went.
+    el.scrollTo({
+      top: target,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
+
+    // Measured against the target rather than the current position: the scroll
+    // is still in flight, and if it turns out to be a no-op no scroll event
+    // fires and handleScroll would never run.
+    setIsAtBottom(isEndInView(target));
+  }, [messages.length, isEndInView]);
+
+  // A question was just sent: park it straight away, so it does not jump when
+  // the reply lands. "Thinking..." appears directly under it and the reply then
+  // streams into the reserved space below.
+  useEffect(() => {
+    park();
+  }, [messages.length, park]);
+
+  // A reply landed. Park the question at the top of the view — pinning to the
+  // bottom would drop the reader at the end of an answer they have not read —
+  // and start revealing the text, unless this is a restored session, a Stop
+  // press, or the reader has asked for less motion.
+  useEffect(() => {
+    const previous = decidedFor;
+
+    setDecidedFor(answeredCount);
+
+    if (answeredCount === 0) {
+      return;
+    }
+
+    park();
+
+    const isRestoredSession = previous === null;
+    const wasStopped = skipNextStream.current;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    skipNextStream.current = false;
+
+    if (
+      isRestoredSession ||
+      wasStopped ||
+      prefersReducedMotion ||
+      answeredCount <= (previous ?? 0)
+    ) {
+      return;
+    }
+
+    const idx = answeredCount - 1;
+
+    setStream({
+      idx,
+      revealed: 0,
+      total: flattenReplyWords(getMockAskStellarReply(messages[idx]).paragraphs)
+        .length,
+    });
+  }, [answeredCount, decidedFor, messages, park]);
+
+  // Reveal the next word, until the reply is whole. The wait is measured from
+  // the word just shown, so the pause lands after the punctuation rather than
+  // before it.
+  useEffect(() => {
+    if (!stream) {
+      return;
+    }
+
+    if (stream.revealed >= stream.total) {
+      setStream(null);
+      return;
+    }
+
+    const words = flattenReplyWords(
+      getMockAskStellarReply(messages[stream.idx]).paragraphs,
     );
-  }, [answeredCount, messages.length]);
+    const previous = words[stream.revealed - 1];
+    const isBreak =
+      previous &&
+      (previous.isParagraphEnd || STREAM_PAUSE_AFTER.test(previous.word));
+    const delay = isBreak
+      ? STREAM_PAUSE_MS
+      : STREAM_WORD_MS + (Math.random() * 2 - 1) * STREAM_JITTER_MS;
+
+    const timer = setTimeout(() => {
+      setStream((s) => (s ? { ...s, revealed: s.revealed + 1 } : s));
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [stream, messages]);
+
+  // Text arriving under the reader grows the content without firing a scroll
+  // event, so the button state has to be recomputed on every reveal. No
+  // re-parking: the reserved space means the question was already where it
+  // belongs before the first word landed.
+  useEffect(() => {
+    const el = scrollEl.current;
+
+    if (el) {
+      setIsAtBottom(isEndInView(el.scrollTop));
+    }
+  }, [stream, isEndInView]);
 
   const submit = (text: string) => {
     const trimmed = text.trim();
@@ -500,6 +816,10 @@ export const AskStellarPanel = ({
         />
       </div>
 
+      {/* Decorative; the composer's gradient has no element because its
+          wrapper carries it, but this end has nothing to hang off. */}
+      <div className="AskStellarPanel__topFade" aria-hidden="true" />
+
       <div
         className="AskStellarPanel__messages"
         ref={scrollEl}
@@ -512,7 +832,17 @@ export const AskStellarPanel = ({
 
             {messages.map((message, idx) => {
               const isAnswered = idx < answeredCount;
+              const isLast = idx === messages.length - 1;
               const reply = getMockAskStellarReply(message);
+              // null — everything complete — unless this exchange is being
+              // revealed, or is about to be and has not been ruled on yet.
+              const revealed =
+                stream?.idx === idx
+                  ? stream.revealed
+                  : isAwaitingStream && idx === answeredCount - 1
+                    ? 0
+                    : null;
+              const slices = sliceReply(reply.paragraphs, revealed);
 
               return (
                 <div
@@ -522,7 +852,7 @@ export const AskStellarPanel = ({
                   <div
                     className="AskStellarPanel__bubble"
                     data-from="user"
-                    ref={idx === messages.length - 1 ? lastBubbleEl : undefined}
+                    ref={isLast ? lastBubbleEl : undefined}
                   >
                     <Text as="div" size="sm">
                       {message}
@@ -533,22 +863,37 @@ export const AskStellarPanel = ({
                     // No bubble: the assistant is the panel's own voice, so it
                     // reads as body copy rather than as a message from someone
                     // else.
-                    <div className="AskStellarPanel__reply">
-                      {reply.paragraphs.map((paragraph, pIdx) => {
+                    <div
+                      className="AskStellarPanel__reply"
+                      ref={isLast ? lastContentEl : undefined}
+                    >
+                      {slices.map((slice, pIdx) => {
+                        const { paragraph } = slice;
                         const sourceKey = `${idx}-${pIdx}`;
+
+                        // Not reached yet: skipped entirely rather than left as
+                        // an empty row that would jump when its first word
+                        // arrives.
+                        if (!slice.hasStarted) {
+                          return null;
+                        }
 
                         return (
                           <div
                             className="AskStellarPanel__paragraph"
                             key={pIdx}
                           >
-                            {renderParagraph(
-                              paragraph.text,
-                              paragraph.links,
-                              navigate,
-                            )}
+                            {/* Links and the source badge belong to a finished
+                                paragraph; mid-stream it is plain text. */}
+                            {slice.isComplete
+                              ? renderParagraph(
+                                  paragraph.text,
+                                  paragraph.links,
+                                  navigate,
+                                )
+                              : slice.text}
 
-                            {paragraph.sources?.length ? (
+                            {slice.isComplete && paragraph.sources?.length ? (
                               <>
                                 {/* Ordinary space, so the badge sits after the
                                     last word and wraps with it if the line is
@@ -570,6 +915,7 @@ export const AskStellarPanel = ({
                   ) : (
                     <div
                       className="AskStellarPanel__thinking"
+                      ref={isLast ? lastContentEl : undefined}
                       role="status"
                       aria-label="Ask Stellar is replying"
                     >
@@ -612,7 +958,7 @@ export const AskStellarPanel = ({
         )}
       </div>
 
-      <div className="AskStellarPanel__composer">
+      <div className="AskStellarPanel__composer" ref={composerEl}>
         {/* Lives in the composer wrapper so it tracks the composer's top edge
             rather than the scroll container's, and overflows upward into the
             fade. Only shown once there is something below the fold. */}
@@ -645,6 +991,16 @@ export const AskStellarPanel = ({
             rows={1}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
+              // While an IME is composing — Korean, Japanese, Chinese — Enter
+              // commits the candidate syllable and belongs to the IME, not to
+              // us. Sending on it fired twice: once with the committed text and
+              // once with the syllable still under composition. `isComposing`
+              // is the modern signal; keyCode 229 is the older one some
+              // browsers still report.
+              if (e.nativeEvent.isComposing || e.keyCode === 229) {
+                return;
+              }
+
               // Enter sends, shift+Enter makes a new line.
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -674,14 +1030,15 @@ export const AskStellarPanel = ({
               />
             )}
 
-            {isThinking ? (
-              // Mocked: there is nothing to cancel, so stopping just ends the
-              // fake think-time and reveals the reply that was coming anyway.
+            {isThinking || isStreaming ? (
+              // Mocked: there is nothing to cancel, so stopping just skips to
+              // the finished reply that was coming anyway. Holds the send slot
+              // for the whole of thinking and streaming.
               <Button
                 variant="primary"
                 size="sm"
                 icon={<Icon.Square />}
-                onClick={onAnswered}
+                onClick={handleStop}
                 aria-label="Stop generating"
                 data-panel-role="stop"
               />
